@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Мой Помощник</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Библиотеки для красивого отображения кода -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Шапка -->
+        <header class="app-header">
+            <h1>🧠 Мой AI-Ассистент</h1>
+        </header>
+
+        <!-- Окно чата -->
+        <div id="chat-box">
+            <div class="message ai-message">
+                Привет! Я твой личный секретный ассистент на базе Llama 3. Чем займемся сегодня? Напишем код, придумаем текст или решим задачку? 😎
+            </div>
+        </div>
+
+        <!-- Поле ввода -->
+        <div class="input-area">
+            <textarea id="userInput" placeholder="Спроси меня о чем угодно..."></textarea>
+            <button id="sendBtn">➤</button>
+        </div>
+    </div>
+
+    <!-- VK Bridge и наш скрипт -->
+    <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
