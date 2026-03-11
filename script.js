@@ -1,16 +1,15 @@
-// Инициализация VK
 vkBridge.send('VKWebAppInit');
 
 let USER_ID = null;
-// Пока указываем ссылку на ваш основной сервер, чуть позже мы добавим туда этот эндпоинт
 const API_URL = 'https://neuro-master.online/api/my_personal_ai'; 
 
-// Получаем ваш ID
+// --- МАССИВ ДЛЯ ХРАНЕНИЯ ПАМЯТИ ---
+let chatHistory = []; 
+
 vkBridge.send('VKWebAppGetUserInfo')
     .then(data => { USER_ID = data.id; })
     .catch(console.error);
 
-// Настройка красивой подсветки кода
 marked.setOptions({
     highlight: function(code, lang) {
         const language = hljs.getLanguage(lang) ? lang : 'plaintext';
@@ -21,8 +20,19 @@ marked.setOptions({
 const chatBox = document.getElementById('chat-box');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
+const clearChatBtn = document.getElementById('clearChatBtn'); // Кнопка очистки
 
-// Функция добавления сообщения в чат
+// Функция очистки чата
+clearChatBtn.addEventListener('click', () => {
+    chatHistory = []; // Сбрасываем память в коде
+    // Оставляем только приветственное сообщение
+    chatBox.innerHTML = `
+        <div class="message ai-message">
+            Память очищена! Я готов к новой задаче. 🧹
+        </div>
+    `;
+});
+
 function appendMessage(sender, text, isMarkdown = false) {
     const div = document.createElement('div');
     div.className = `message ${sender}-message`;
@@ -34,25 +44,21 @@ function appendMessage(sender, text, isMarkdown = false) {
     }
     
     chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight; // Прокрутка вниз
+    chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// Отправка сообщения
 async function sendMessage() {
     const text = userInput.value.trim();
     if (!text) return;
-    
-    if (!USER_ID) {
-        alert("Подождите, ваш VK ID еще не загрузился.");
-        return;
-    }
+    if (!USER_ID) { alert("Подождите, ваш VK ID еще не загрузился."); return; }
 
-    // 1. Показываем ваше сообщение
     appendMessage('user', text);
     userInput.value = '';
     sendBtn.disabled = true;
     
-    // 2. Индикатор загрузки
+    // Добавляем сообщение пользователя в память
+    chatHistory.push({ role: "user", content: text });
+
     const loadingId = 'loading-' + Date.now();
     const loadingDiv = document.createElement('div');
     loadingDiv.className = 'message ai-message';
@@ -61,32 +67,35 @@ async function sendMessage() {
     chatBox.appendChild(loadingDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // 3. Отправка на ваш сервер
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: USER_ID, prompt: text })
+            // ОТПРАВЛЯЕМ НЕ ПРОСТО ТЕКСТ, А ВСЮ ИСТОРИЮ!
+            body: JSON.stringify({ user_id: USER_ID, history: chatHistory }) 
         });
         const result = await response.json();
         
-        // Удаляем индикатор загрузки
         chatBox.removeChild(document.getElementById(loadingId));
 
         if (result.success) {
-            appendMessage('ai', result.response, true); // true = отрендерить код!
+            appendMessage('ai', result.response, true);
+            // Добавляем ответ ИИ в память, чтобы он помнил, что сам же и сказал
+            chatHistory.push({ role: "assistant", content: result.response });
         } else {
             appendMessage('ai', '❌ Ошибка: ' + (result.error || 'Неизвестная ошибка'));
+            // Если ошибка, удаляем последний вопрос из памяти, чтобы не ломать контекст
+            chatHistory.pop(); 
         }
     } catch (e) {
         chatBox.removeChild(document.getElementById(loadingId));
-        appendMessage('ai', '🌐 Ошибка сети: не могу связаться с сервером.');
+        appendMessage('ai', '🌐 Ошибка сети.');
+        chatHistory.pop();
     } finally {
         sendBtn.disabled = false;
     }
 }
 
-// Обработчик кнопки и клавиши Enter
 sendBtn.addEventListener('click', sendMessage);
 userInput.addEventListener('keypress', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) {
