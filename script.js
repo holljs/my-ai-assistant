@@ -14,6 +14,7 @@ const chatBox = document.getElementById('chat-box');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
 const clearChatBtn = document.getElementById('clearChatBtn');
+const modelSelector = document.getElementById('modelSelector');
 
 // Функция отрисовки сообщения
 function appendMessage(sender, text, isMarkdown = false) {
@@ -93,7 +94,7 @@ async function sendMessage() {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: USER_ID, prompt: text }) // Теперь шлем только текст!
+            body: JSON.stringify({ user_id: USER_ID, prompt: text, model_type: modelSelector.value }) 
         });
         const result = await response.json();
         
