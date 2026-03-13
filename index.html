@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <!-- ... (оставьте как было: meta, title, ссылки на стили и highlight.js) ... -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Мой Помощник</title>
@@ -9,40 +8,149 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        /* Улучшенные стили для выпадающего списка */
+        #modelSelector {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+        
+        #modelSelector:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        #modelSelector option {
+            color: black;
+            padding: 8px;
+        }
+        
+        /* Иконки моделей */
+        .model-icon {
+            margin-right: 5px;
+            font-size: 16px;
+        }
+        
+        /* Кнопка очистки */
+        #clearChatBtn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        #clearChatBtn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        /* Анимация для сообщений */
+        .message {
+            animation: fadeIn 0.3s ease-out;
+            animation-fill-mode: both;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
     <div id="app">
-        <!-- Шапка с селектором и кнопкой очистки -->
         <header class="app-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px;">
-            <h1 style="margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px;">
+            <h1 style="margin: 0; font-size: 18px; display: flex; align-items: center;">
                 🧠 Мой ИИ
-                <!-- НОВЫЙ ВЫПАДАЮЩИЙ СПИСОК МОДЕЛЕЙ -->
-                <select id="modelSelector" style="background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 5px; padding: 5px; font-size: 14px; outline: none; cursor: pointer;">
-                    <option value="gpt5_nano" style="color: black;">⚡ GPT-5 Nano (Супер-дешево)</option>
-                    <option value="gemini_flash" style="color: black;">🧠 Gemini 2.5 Flash (Логика)</option>
-                    <option value="gpt4o_mini" style="color: black;">🤖 GPT-4o Mini (Классика)</option>
-                    <option value="llama3_1" style="color: black;">✨ Llama 3.1 70B (Мощная)</option>
-                    <!-- Можно добавить и Llama 3 8B, если захотите, как резерв -->
+                <select id="modelSelector">
+                    <option value="gemini_flash" selected>🧠 Gemini 2.5 Flash</option>
+                    <option value="llama3">🚀 Llama 3</option>
+                    <option value="gpt4o_mini">🛡️ GPT-4o mini</option>
                 </select>
             </h1>
-            <button id="clearChatBtn" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">🧹 Очистить</button>
+            <button id="clearChatBtn">🧹 Очистить</button>
         </header>
 
-        <!-- Окно чата -->
         <div id="chat-box">
             <div class="message ai-message">
-                Привет! Я твой личный ассистент с памятью. Пиши код, задавай вопросы. <br><br><i>Нажми на метёлку сверху, когда захочешь начать новую тему!</i>
+                Привет! Я твой личный ассистент с памятью. Пиши код, задавай вопросы. 
+                <br><br><i>Нажми на метёлку сверху, когда захочешь начать новую тему!</i>
             </div>
         </div>
 
-        <!-- Поле ввода -->
         <div class="input-area">
             <textarea id="userInput" placeholder="Спроси меня о чем угодно..."></textarea>
             <button id="sendBtn">➤</button>
         </div>
     </div>
 
-    <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
-    <script src="script.js"></script>
+    <script>
+        // Добавляем обработчики событий
+        document.getElementById('modelSelector').addEventListener('change', function() {
+            const selectedModel = this.value;
+            localStorage.setItem('selectedModel', selectedModel);
+        });
+
+        // Загрузка сохраненной модели
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedModel = localStorage.getItem('selectedModel') || 'gemini_flash';
+            document.getElementById('modelSelector').value = savedModel;
+        });
+
+        // Пример обработчика отправки сообщения
+        document.getElementById('sendBtn').addEventListener('click', function() {
+            const userInput = document.getElementById('userInput').value.trim();
+            if (userInput) {
+                const selectedModel = document.getElementById('modelSelector').value;
+                sendMessage(userInput, selectedModel);
+            }
+        });
+
+        // Функция отправки сообщения (заглушка для примера)
+        async function sendMessage(prompt, modelType) {
+            // Логика отправки на сервер...
+            console.log(`Отправка сообщения: ${prompt} с моделью: ${modelType}`);
+            
+            // Пример отображения ответа
+            const chatBox = document.getElementById('chat-box');
+            const responseMessage = document.createElement('div');
+            responseMessage.className = 'message ai-message';
+            responseMessage.innerHTML = `💬 <b>Ответ от ${getModelName(modelType)}:</b><br>${generateSampleResponse(prompt)}`;
+            chatBox.appendChild(responseMessage);
+            
+            // Очистка поля ввода
+            document.getElementById('userInput').value = '';
+            
+            // Прокрутка вниз
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Функция для генерации имени модели
+        function getModelName(modelType) {
+            const names = {
+                'gemini_flash': 'Gemini 2.5 Flash',
+                'llama3': 'Llama 3',
+                'gpt4o_mini': 'GPT-4o mini'
+            };
+            return names[modelType] || modelType;
+        }
+
+        // Функция для генерации примерного ответа
+        function generateSampleResponse(prompt) {
+            return `Это пример ответа на запрос: "${prompt}". <br><br>
+                    Выбранная модель: ${getModelName(document.getElementById('modelSelector').value)} 💡`;
+        }
+    </script>
 </body>
 </html>
