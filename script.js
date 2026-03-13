@@ -1,88 +1,122 @@
-// script.js (полная рабочая версия)
+vkBridge.send('VKWebAppInit');
 
-// Глобальные переменные
 let USER_ID = null;
-let vkBridgeInitialized = false;
+const API_URL = 'https://neuro-master.online/api/my_personal_ai'; 
 
-// Инициализация VK Bridge
-function initVKBridge() {
-  // 1. Подписка на события (РАБОЧИЙ ВАРИАНТ ДЛЯ ВСЕХ ПЛАТФОРМ)
-  vkBridge.subscribe(e => {
-    if (e.detail.type === 'VKWebAppInitResult') {
-      console.log('Приложение инициализировано!');
-      vkBridgeInitialized = true;
-      
-      // Получаем данные пользователя
-      vkBridge.send('VKWebAppGetUserInfo').then(data => {
-        USER_ID = data.id;
-        loadHistory();
-      });
+marked.setOptions({
+    highlight: function(code, lang) {
+        const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+        return hljs.highlight(code, { language }).value;
     }
-    
-    // Обработка ошибок инициализации
-    if (e.detail.type === 'VKWebAppInitError') {
-      console.error('Ошибка инициализации:', e.detail.data);
-    }
-  });
-
-  // 2. Фаллбэк для мобильных устройств
-  setTimeout(() => {
-    if (!vkBridgeInitialized) {
-      console.warn('Инициализация по таймеру');
-      initApp();
-      vkBridgeInitialized = true;
-    }
-  }, 2000);
-}
-
-// Загрузка истории чата
-async function loadHistory() {
-  try {
-    // Важный момент: защита от CSRF/IDOR
-    const sign = window.location.search.slice(1);
-    const response = await fetch('/api/get_history', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-VK-Sign': sign  // Критичный заголовок для валидации
-      },
-      body: JSON.stringify({ user_id: USER_ID })
-    });
-    
-    const data = await response.json();
-    renderHistory(data);
-  } catch (error) {
-    console.error('Ошибка загрузки истории:', error);
-  }
-}
-
-// Сохранение состояния при закрытии
-function saveState() {
-  localStorage.setItem('appState', JSON.stringify({
-    lastMessage: Date.now()
-  }));
-}
-
-// Основная инициализация приложения
-function initApp() {
-  // Проверка наличия VK Bridge
-  if (window.vkBridge) {
-    initVKBridge();
-  } else {
-    // Загрузка через скрипт
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js';
-    script.onload = initVKBridge;
-    document.head.appendChild(script);
-  }
-}
-
-// Обработчик закрытия/перезагрузки страницы
-window.addEventListener('pagehide', () => {
-  saveState();
 });
 
-// Запуск при загрузке документа
-document.addEventListener('DOMContentLoaded', () => {
-  initApp();
+const chatBox = document.getElementById('chat-box');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const clearChatBtn = document.getElementById('clearChatBtn');
+const modelSelector = document.getElementById('modelSelector');
+
+// Функция отрисовки сообщения
+function appendMessage(sender, text, isMarkdown = false) {
+    const div = document.createElement('div');
+    div.className = `message ${sender}-message`;
+    if (isMarkdown) {
+        div.innerHTML = marked.parse(text);
+    } else {
+        div.textContent = text;
+    }
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Загрузка истории при старте!
+async function loadHistory() {
+    try {
+        const response = await fetch(`${API_URL}/history?user_id=${USER_ID}`);
+        const result = await response.json();
+        
+        if (result.success && result.history.length > 0) {
+            chatBox.innerHTML = ''; // Убираем дефолтное приветствие
+            result.history.forEach(msg => {
+                // Если от ассистента - рендерим Markdown, если от юзера - просто текст
+                appendMessage(msg.role === 'user' ? 'user' : 'ai', msg.content, msg.role !== 'user');
+            });
+        }
+    } catch (e) {
+        console.error("Не удалось загрузить историю", e);
+    }
+}
+
+// Инициализация
+vkBridge.send('VKWebAppGetUserInfo')
+    .then(data => { 
+        USER_ID = data.id; 
+        loadHistory(); // Как только узнали ID, грузим старые переписки!
+    })
+    .catch(console.error);
+
+// Очистка базы данных (метелочка)
+clearChatBtn.addEventListener('click', async () => {
+    if (!USER_ID) return;
+    chatBox.innerHTML = '<div class="message ai-message">Очищаю память... ⏳</div>';
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: USER_ID, prompt: "", clear_history: true }) 
+        });
+        const result = await response.json();
+        chatBox.innerHTML = `<div class="message ai-message">${result.response}</div>`;
+    } catch(e) {
+        chatBox.innerHTML = '<div class="message ai-message">❌ Ошибка очистки.</div>';
+    }
+});
+
+// Отправка сообщения
+async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text) return;
+    if (!USER_ID) { alert("Подождите, ваш VK ID еще не загрузился."); return; }
+
+    appendMessage('user', text);
+    userInput.value = '';
+    sendBtn.disabled = true;
+
+    const loadingId = 'loading-' + Date.now();
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'message ai-message';
+    loadingDiv.id = loadingId;
+    loadingDiv.textContent = 'Думаю... ⏳';
+    chatBox.appendChild(loadingDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: USER_ID, prompt: text, model_type: modelSelector.value }) 
+        });
+        const result = await response.json();
+        
+        chatBox.removeChild(document.getElementById(loadingId));
+
+        if (result.success) {
+            appendMessage('ai', result.response, true);
+        } else {
+            appendMessage('ai', '❌ Ошибка: ' + (result.error || 'Неизвестная ошибка'));
+        }
+    } catch (e) {
+        chatBox.removeChild(document.getElementById(loadingId));
+        appendMessage('ai', '🌐 Ошибка сети.');
+    } finally {
+        sendBtn.disabled = false;
+    }
+}
+
+sendBtn.addEventListener('click', sendMessage);
+userInput.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
 });
