@@ -50,17 +50,28 @@ async function loadHistory() {
 
 // Инициализация
 async function initApp() {
+    // 1. Пытаемся достать ID напрямую из той длинной ссылки (URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const idFromUrl = urlParams.get('vk_user_id');
+    
+    if (idFromUrl) {
+        USER_ID = parseInt(idFromUrl);
+        console.log("ID взят из ссылки:", USER_ID);
+        loadHistory();
+    }
+
+    // 2. Параллельно запрашиваем через Bridge для надежности
     try {
         const data = await vkBridge.send('VKWebAppGetUserInfo');
-        USER_ID = data.id;
-        console.log("ID загружен:", USER_ID);
-        loadHistory();
+        if (!USER_ID) { // Если из ссылки не достали, берем отсюда
+            USER_ID = data.id;
+            loadHistory();
+        }
     } catch (e) {
-        console.error("Ошибка VK Bridge:", e);
-        setTimeout(initApp, 1000); // Пробуем еще раз через секунду
+        console.error("Bridge Error:", e);
+        if (!USER_ID) setTimeout(initApp, 2000);
     }
 }
-initApp();
 
 // Очистка базы данных (метелочка)
 clearChatBtn.addEventListener('click', async () => {
