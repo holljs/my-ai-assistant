@@ -1,5 +1,3 @@
-vkBridge.send('VKWebAppInit');
-
 let USER_ID = null;
 let currentFileUrl = null; // Добавили переменную для хранения ссылки на фото
 const API_URL = 'https://neuro-master.online/api/my_personal_ai';
@@ -45,31 +43,6 @@ async function loadHistory() {
         }
     } catch (e) {
         console.error("Не удалось загрузить историю", e);
-    }
-}
-
-// Инициализация
-async function initApp() {
-    // 1. Пытаемся достать ID напрямую из той длинной ссылки (URL)
-    const urlParams = new URLSearchParams(window.location.search);
-    const idFromUrl = urlParams.get('vk_user_id');
-    
-    if (idFromUrl) {
-        USER_ID = parseInt(idFromUrl);
-        console.log("ID взят из ссылки:", USER_ID);
-        loadHistory();
-    }
-
-    // 2. Параллельно запрашиваем через Bridge для надежности
-    try {
-        const data = await vkBridge.send('VKWebAppGetUserInfo');
-        if (!USER_ID) { // Если из ссылки не достали, берем отсюда
-            USER_ID = data.id;
-            loadHistory();
-        }
-    } catch (e) {
-        console.error("Bridge Error:", e);
-        if (!USER_ID) setTimeout(initApp, 2000);
     }
 }
 
@@ -175,3 +148,46 @@ userInput.addEventListener('keypress', function (e) {
         sendMessage();
     }
 });
+
+// --- ЗАПУСК ПРИЛОЖЕНИЯ ---
+
+// Улучшенная функция инициализации
+async function initApp() {
+    // 1. Ищем ID в URL (проверяем и search, и hash, так как на мобилках бывает по-разному)
+    const queryString = window.location.search || window.location.hash.substring(1);
+    const urlParams = new URLSearchParams(queryString);
+    const idFromUrl = urlParams.get('vk_user_id');
+    
+    if (idFromUrl) {
+        USER_ID = parseInt(idFromUrl);
+        console.log("✅ ID взят из ссылки:", USER_ID);
+        loadHistory();
+        return; // Если нашли в ссылке, прерываем функцию, Bridge уже не мучаем
+    }
+
+    // 2. Если в ссылке пусто, дергаем VK Bridge
+    try {
+        console.log("⏳ Пробуем получить ID через VK Bridge...");
+        const data = await vkBridge.send('VKWebAppGetUserInfo');
+        if (data && data.id) {
+            USER_ID = data.id;
+            console.log("✅ ID взят из VK Bridge:", USER_ID);
+            loadHistory();
+        }
+    } catch (e) {
+        console.error("❌ Ошибка получения юзера через Bridge:", e);
+        // Если юзер закрыл окно разрешений или инет отпал — пробуем еще раз через 2 секунды
+        setTimeout(initApp, 2000);
+    }
+}
+
+// Запускаем Bridge и ТОЛЬКО ПОСЛЕ ЭТОГО стартуем нашу логику
+vkBridge.send('VKWebAppInit')
+    .then(() => {
+        console.log("🚀 VK Bridge инициализирован!");
+        initApp(); // <-- ВОТ ТОТ САМЫЙ ВЫЗОВ, КОТОРОГО НЕ ХВАТАЛО
+    })
+    .catch((error) => {
+        console.error("❌ Ошибка инициализации VK Bridge:", error);
+        initApp(); // Все равно пробуем запустить, вдруг ID есть в ссылке
+    });
