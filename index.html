@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>НейроБро — Твой ИИ-помощник</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=7">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -16,12 +16,20 @@
                 <span class="logo-icon">🧠</span>
                 <span class="logo-text">НейроБро</span>
             </div>
+            
             <div class="header-controls">
+                <div id="energyDisplay" class="energy-badge" title="Твоя Энергия">
+                    ⚡️ <span id="energyCount">...</span>
+                </div>
+                
+                <button id="payBtn" class="pay-btn" style="display: none;" title="Пополнить">💳 150₽</button>
+                
                 <select id="modelSelector" class="modern-select">
-                    <option value="gpt4o_mini">🤖 Репетитор/Друг</option>
+                    <option value="gpt4o_mini">🤖 Репетитор</option>
                     <option value="gemini_flash">🖼️ Вижн (Фото)</option>
                     <option value="gemini_31_pro">💻 Кодер (Pro)</option>
                 </select>
+                
                 <button id="clearChatBtn" class="icon-btn" title="Очистить память">🧹</button>
             </div>
         </header>
@@ -34,13 +42,15 @@
 
         <div class="input-area">
             <input type="file" id="fileInput" style="display: none;" accept="image/*">
-            <button id="attachBtn" class="action-btn">📎</button>
-            <button id="micBtn" class="action-btn">🎤</button>
+            <button id="attachBtn" class="action-btn" title="Прикрепить фото">📎</button>
+            <button id="micBtn" class="action-btn" title="Голосовой ввод">🎤</button>
+            
             <textarea id="userInput" placeholder="Спроси меня о чем угодно..."></textarea>
             <button id="sendBtn">➤</button>
         </div>
     </div>
+    
     <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
-    <script src="script.js?v=5"></script>
+    <script src="script.js?v=7"></script>
 </body>
 </html>
