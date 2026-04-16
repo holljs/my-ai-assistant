@@ -1,9 +1,7 @@
 let USER_ID = null;
 let currentFileUrl = null;
-// Наш новый микросервис только для НейроБро!
 const BASE_URL = 'https://neuro-master.online/api/bro';
 
-// Настройки разметки Markdown для ответов с кодом
 marked.setOptions({
     highlight: function(code, lang) {
         const language = hljs.getLanguage(lang) ? lang : 'plaintext';
@@ -22,11 +20,8 @@ const energyCount = document.getElementById('energyCount');
 function appendMessage(sender, text, isMarkdown = false) {
     const div = document.createElement('div');
     div.className = `message ${sender}-message`;
-    if (isMarkdown) {
-        div.innerHTML = marked.parse(text);
-    } else {
-        div.textContent = text;
-    }
+    if (isMarkdown) { div.innerHTML = marked.parse(text); } 
+    else { div.textContent = text; }
     chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
 }
@@ -56,48 +51,64 @@ async function fetchEnergy() {
     } catch (e) { console.error("Ошибка загрузки энергии", e); }
 }
 
-// --- ОПЛАТА И ПЛАТФОРМА (ЮKASSA) ---
-const payBtn = document.getElementById('payBtn');
+// --- ЛОГИКА ТАРИФОВ И ЮKASSA ---
+const openTariffBtn = document.getElementById('openTariffBtn');
+const tariffModal = document.getElementById('tariffModal');
+const closeModal = document.getElementById('closeModal');
+const tariffCards = document.querySelectorAll('.tariff-card');
+
 const urlParams = new URLSearchParams(window.location.search);
 const vkPlatform = urlParams.get('vk_platform');
 
-// Прячем оплату на мобилках (правила ВКонтакте)
+// ПРОВЕРКА ПЛАТФОРМЫ ВК (Жестко прячем оплату на мобилках)
 if (vkPlatform === 'mobile_iphone' || vkPlatform === 'mobile_android' || vkPlatform === 'mobile_ipad') {
-    if (payBtn) payBtn.style.display = 'none';
+    if (openTariffBtn) openTariffBtn.style.display = 'none';
 } else {
-    if (payBtn) payBtn.style.display = 'block';
+    if (openTariffBtn) openTariffBtn.style.display = 'block';
     
-    payBtn.addEventListener('click', async () => {
+    // Открыть модалку
+    openTariffBtn.addEventListener('click', () => {
         if (!USER_ID) return alert("Подождите, ID еще загружается...");
-        
-        payBtn.textContent = "⏳...";
-        payBtn.disabled = true;
+        tariffModal.style.display = 'flex';
+    });
+    
+    // Закрыть модалку
+    closeModal.addEventListener('click', () => { tariffModal.style.display = 'none'; });
+    window.addEventListener('click', (e) => { if (e.target === tariffModal) tariffModal.style.display = 'none'; });
 
-        try {
-            const response = await fetch('https://neuro-master.online/api/yookassa/create-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: USER_ID,
-                    amount: 150, 
-                    description: "Пополнение баланса НейроБро (1500 ⚡️)",
-                    platform: "vk",
-                    currency_type: "energy" // Сообщаем серверу, что покупаем ЭНЕРГИЮ
-                })
-            });
-            const result = await response.json();
-            if (result.success && result.payment_url) {
-                window.location.href = result.payment_url;
-            } else {
-                alert("❌ Ошибка кассы: " + (result.detail || "Неизвестно"));
-                payBtn.textContent = "💳 150₽";
-                payBtn.disabled = false;
+    // Обработка клика по карточкам тарифов
+    tariffCards.forEach(card => {
+        card.addEventListener('click', async () => {
+            const amount = parseInt(card.getAttribute('data-amount'));
+            
+            // Визуальная индикация загрузки
+            const originalContent = card.innerHTML;
+            card.innerHTML = '<span style="margin: 0 auto; font-weight:bold;">Загрузка... ⏳</span>';
+            
+            try {
+                const response = await fetch('https://neuro-master.online/api/yookassa/create-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: USER_ID,
+                        amount: amount, 
+                        description: `Пополнение Энергии НейроБро`,
+                        platform: "vk",
+                        currency_type: "energy" // МАЯЧОК ДЛЯ СЕРВЕРА
+                    })
+                });
+                const result = await response.json();
+                if (result.success && result.payment_url) {
+                    window.location.href = result.payment_url;
+                } else {
+                    alert("❌ Ошибка кассы: " + (result.detail || "Неизвестно"));
+                    card.innerHTML = originalContent;
+                }
+            } catch (e) {
+                alert("🌐 Ошибка сети при платеже.");
+                card.innerHTML = originalContent;
             }
-        } catch (e) {
-            alert("🌐 Ошибка сети при платеже.");
-            payBtn.textContent = "💳 150₽";
-            payBtn.disabled = false;
-        }
+        });
     });
 }
 
@@ -134,10 +145,10 @@ if (SpeechRecognition) {
     recognition.onerror = (event) => {
         micBtn.classList.remove('recording');
         userInput.placeholder = "Спроси меня о чем угодно...";
-        if (event.error !== 'no-speech') alert("Ошибка микрофона. Проверьте разрешения в ВК.");
+        if (event.error !== 'no-speech') alert("Ошибка микрофона.");
     };
 } else {
-    micBtn.style.display = 'none'; // Скрываем, если устройство не поддерживает
+    micBtn.style.display = 'none';
 }
 
 // --- ОЧИСТКА ПАМЯТИ ---
@@ -170,14 +181,13 @@ fileInput.addEventListener('change', async (e) => {
     formData.append('file', file);
 
     try {
-        // Загрузка фото идет на основной сервер
         const response = await fetch('https://neuro-master.online/api/upload', {
             method: 'POST', body: formData
         });
         const result = await response.json();
         if (result.success) {
             currentFileUrl = result.url;
-            appendMessage('ai', `✅ Фото прикреплено. Напиши, что с ним сделать (включи режим Вижн)!`);
+            appendMessage('ai', `✅ Фото загружено. Напиши, что с ним сделать (включи режим Думающая)!`);
         } else {
             appendMessage('ai', `❌ Ошибка загрузки файла.`);
         }
@@ -220,7 +230,7 @@ async function sendMessage() {
 
         if (result.success) {
             appendMessage('ai', result.response, true);
-            fetchEnergy(); // <--- Обновляем баланс энергии после успешного ответа!
+            fetchEnergy();
         } else {
             appendMessage('ai', '❌ ' + (result.error || 'Неизвестная ошибка'));
         }
@@ -240,14 +250,14 @@ userInput.addEventListener('keypress', function (e) {
     }
 });
 
-// --- ЗАПУСК ПРИЛОЖЕНИЯ (Правильная инициализация ВК) ---
+// --- ЗАПУСК ПРИЛОЖЕНИЯ ---
 async function initApp() {
     const idFromUrl = urlParams.get('vk_user_id');
     
     if (idFromUrl) {
         USER_ID = parseInt(idFromUrl);
         loadHistory();
-        fetchEnergy(); // Грузим энергию
+        fetchEnergy();
         return; 
     }
 
@@ -256,14 +266,12 @@ async function initApp() {
         if (data && data.id) {
             USER_ID = data.id;
             loadHistory();
-            fetchEnergy(); // Грузим энергию
+            fetchEnergy();
         }
     } catch (e) {
-        console.error("Ошибка получения юзера через Bridge:", e);
+        console.error("Ошибка Bridge:", e);
         setTimeout(initApp, 2000);
     }
 }
 
-vkBridge.send('VKWebAppInit')
-    .then(() => initApp())
-    .catch(() => initApp());
+vkBridge.send('VKWebAppInit').then(() => initApp()).catch(() => initApp());
