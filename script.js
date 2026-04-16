@@ -1,6 +1,6 @@
 let USER_ID = null;
 let currentFileUrl = null;
-const API_URL = 'https://neuro-master.online/api/my_personal_ai';
+const BASE_URL = 'https://neuro-master.online/api/bro';
 
 // Настройки разметки Markdown для ответов с кодом
 marked.setOptions({
@@ -33,7 +33,7 @@ function appendMessage(sender, text, isMarkdown = false) {
 // --- ИСТОРИЯ И ЭНЕРГИЯ ---
 async function loadHistory() {
     try {
-        const response = await fetch(`${API_URL}/history?user_id=${USER_ID}`);
+        const response = await fetch('${BASE_URL}/history?user_id=${USER_ID}')
         const result = await response.json();
         if (result.success && result.history.length > 0) {
             chatBox.innerHTML = ''; 
@@ -47,7 +47,7 @@ async function loadHistory() {
 async function fetchEnergy() {
     if (!USER_ID) return;
     try {
-        const response = await fetch(`https://neuro-master.online/api/user/${USER_ID}`);
+        const response = await fetch('${BASE_URL}/user/${USER_ID}')
         const result = await response.json();
         if (result.success && result.energy !== undefined) {
             energyCount.textContent = result.energy;
@@ -143,7 +143,7 @@ clearChatBtn.addEventListener('click', async () => {
     if (!USER_ID) return;
     chatBox.innerHTML = '<div class="message ai-message">Очищаю память... ⏳</div>';
     try {
-        const response = await fetch(API_URL, {
+        const response = await fetch('${BASE_URL}/chat', ...)
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: USER_ID, prompt: "", clear_history: true }) 
