@@ -1,5 +1,6 @@
 let USER_ID = null;
 let currentFileUrl = null;
+// Наш новый микросервис только для НейроБро!
 const BASE_URL = 'https://neuro-master.online/api/bro';
 
 // Настройки разметки Markdown для ответов с кодом
@@ -33,7 +34,7 @@ function appendMessage(sender, text, isMarkdown = false) {
 // --- ИСТОРИЯ И ЭНЕРГИЯ ---
 async function loadHistory() {
     try {
-        const response = await fetch('${BASE_URL}/history?user_id=${USER_ID}')
+        const response = await fetch(`${BASE_URL}/history?user_id=${USER_ID}`);
         const result = await response.json();
         if (result.success && result.history.length > 0) {
             chatBox.innerHTML = ''; 
@@ -47,7 +48,7 @@ async function loadHistory() {
 async function fetchEnergy() {
     if (!USER_ID) return;
     try {
-        const response = await fetch('${BASE_URL}/user/${USER_ID}')
+        const response = await fetch(`${BASE_URL}/user/${USER_ID}`);
         const result = await response.json();
         if (result.success && result.energy !== undefined) {
             energyCount.textContent = result.energy;
@@ -60,7 +61,7 @@ const payBtn = document.getElementById('payBtn');
 const urlParams = new URLSearchParams(window.location.search);
 const vkPlatform = urlParams.get('vk_platform');
 
-// Прячем оплату на мобилках
+// Прячем оплату на мобилках (правила ВКонтакте)
 if (vkPlatform === 'mobile_iphone' || vkPlatform === 'mobile_android' || vkPlatform === 'mobile_ipad') {
     if (payBtn) payBtn.style.display = 'none';
 } else {
@@ -80,7 +81,8 @@ if (vkPlatform === 'mobile_iphone' || vkPlatform === 'mobile_android' || vkPlatf
                     user_id: USER_ID,
                     amount: 150, 
                     description: "Пополнение баланса НейроБро (1500 ⚡️)",
-                    platform: "vk"
+                    platform: "vk",
+                    currency_type: "energy" // Сообщаем серверу, что покупаем ЭНЕРГИЮ
                 })
             });
             const result = await response.json();
@@ -143,7 +145,7 @@ clearChatBtn.addEventListener('click', async () => {
     if (!USER_ID) return;
     chatBox.innerHTML = '<div class="message ai-message">Очищаю память... ⏳</div>';
     try {
-        const response = await fetch('${BASE_URL}/chat', ...)
+        const response = await fetch(`${BASE_URL}/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: USER_ID, prompt: "", clear_history: true }) 
@@ -168,6 +170,7 @@ fileInput.addEventListener('change', async (e) => {
     formData.append('file', file);
 
     try {
+        // Загрузка фото идет на основной сервер
         const response = await fetch('https://neuro-master.online/api/upload', {
             method: 'POST', body: formData
         });
@@ -200,7 +203,7 @@ async function sendMessage() {
     chatBox.scrollTop = chatBox.scrollHeight;
 
     try {
-        const response = await fetch(API_URL, {
+        const response = await fetch(`${BASE_URL}/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
