@@ -76,7 +76,7 @@ if (vkPlatform === 'mobile_iphone' || vkPlatform === 'mobile_android' || vkPlatf
     closeModal.addEventListener('click', () => { tariffModal.style.display = 'none'; });
     window.addEventListener('click', (e) => { if (e.target === tariffModal) tariffModal.style.display = 'none'; });
 
-    // Обработка клика по карточкам тарифов
+   // Обработка клика по карточкам тарифов
     tariffCards.forEach(card => {
         card.addEventListener('click', async () => {
             const amount = parseInt(card.getAttribute('data-amount'));
@@ -98,8 +98,21 @@ if (vkPlatform === 'mobile_iphone' || vkPlatform === 'mobile_android' || vkPlatf
                     })
                 });
                 const result = await response.json();
+                
                 if (result.success && result.payment_url) {
-                    window.location.href = result.payment_url;
+                    // Пытаемся открыть ссылку через мост ВК
+                    try {
+                        await vkBridge.send("VKWebAppOpenUrl", {"url": result.payment_url});
+                    } catch (bridgeError) {
+                        // Запасной план: если мост ВК дал сбой, открываем обычной ссылкой браузера
+                        console.log("VK Bridge не смог открыть ссылку, используем window.open:", bridgeError);
+                        window.open(result.payment_url, '_blank');
+                    }
+                    
+                    // Возвращаем карточке прежний вид и закрываем модалку, чтобы не висела вечная загрузка
+                    card.innerHTML = originalContent;
+                    tariffModal.style.display = 'none';
+                    
                 } else {
                     alert("❌ Ошибка кассы: " + (result.detail || "Неизвестно"));
                     card.innerHTML = originalContent;
