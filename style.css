@@ -1,6 +1,6 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { 
-    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: #f0f2f5; 
     color: #333; 
     height: 100vh; 
@@ -46,10 +46,37 @@ body {
     backdrop-filter: blur(5px);
 }
 
+/* Делаем энергию кликабельной и красивой */
+.clickable-energy {
+    cursor: pointer;
+    transition: 0.2s;
+}
+.clickable-energy:hover {
+    background: rgba(255,255,255,0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+/* Плюсик внутри баланса */
+.add-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #10B981;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 14px;
+    font-weight: bold;
+    margin-left: 6px;
+    line-height: 1;
+}
+
 .pay-btn {
     background: #10B981; color: white; border: none; border-radius: 20px;
     padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.2s; font-family: 'Montserrat', sans-serif;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.2s; font-family: 'Inter', sans-serif;
 }
 .pay-btn:hover { background: #059669; transform: translateY(-1px); }
 
@@ -57,9 +84,16 @@ body {
     appearance: none; background: rgba(255, 255, 255, 0.15); color: white;
     border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px;
     padding: 6px 12px; font-size: 13px; font-weight: 600; outline: none; cursor: pointer; transition: 0.2s;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 .modern-select option { color: #333; background: #fff; }
+
+/* Выделяем цветом селект профессий */
+.persona-select {
+    background: rgba(16, 185, 129, 0.1); /* Легкий зеленый оттенок */
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #047857; /* Темно-зеленый текст для акцента */
+}
 
 .icon-btn {
     background: rgba(255, 255, 255, 0.15); border: none; color: white;
@@ -89,7 +123,7 @@ body {
 
 #userInput { 
     flex-grow: 1; padding: 12px 14px; border: 1px solid #CBD5E1; border-radius: 20px; 
-    resize: none; font-family: 'Montserrat', sans-serif; font-size: 14px; 
+    resize: none; font-family: 'Inter', sans-serif; font-size: 14px; 
     font-weight: 500; min-height: 44px; max-height: 120px; outline: none; background: #F8FAFC; transition: 0.2s;
 }
 #userInput:focus { border-color: #1A73E8; background: #fff; }
@@ -132,7 +166,7 @@ body {
 .tariff-card {
     background: #F8FAFC; border: 2px solid #E2E8F0; border-radius: 16px;
     padding: 14px; display: flex; justify-content: space-between; align-items: center;
-    cursor: pointer; transition: 0.2s; position: relative; font-family: 'Montserrat', sans-serif; overflow: hidden;
+    cursor: pointer; transition: 0.2s; position: relative; font-family: 'Inter', sans-serif; overflow: hidden;
 }
 .tariff-card:hover { border-color: #1A73E8; background: #EFF6FF; }
 .tariff-card.popular { border-color: #10B981; background: #ECFDF5; }
@@ -144,33 +178,3 @@ body {
 .t-price { font-size: 18px; font-weight: 800; color: #1E293B; }
 .t-energy { font-size: 14px; font-weight: 600; color: #1A73E8; background: white; padding: 4px 10px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .modal-footer-text { font-size: 11px; color: #94A3B8; margin-top: 15px; font-weight: 500;}
-/* Делаем энергию кликабельной и красивой */
-.clickable-energy {
-    cursor: pointer;
-    transition: 0.2s;
-}
-.clickable-energy:hover {
-    background: rgba(255,255,255,0.25);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-}
-/* Плюсик внутри баланса */
-.add-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #10B981;
-    color: white;
-    border-radius: 50%;
-    width: 16px;
-    height: 16px;
-    font-size: 14px;
-    font-weight: bold;
-    margin-left: 6px;
-    line-height: 1;
-}
-/* Выделяем цветом селект профессий */
-.persona-select {
-    background: rgba(16, 185, 129, 0.2); /* Легкий зеленый оттенок */
-    border-color: rgba(16, 185, 129, 0.4);
-}
