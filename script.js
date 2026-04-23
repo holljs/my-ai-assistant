@@ -52,7 +52,8 @@ async function fetchEnergy() {
 }
 
 // --- ЛОГИКА ТАРИФОВ И ЮKASSA ---
-const openTariffBtn = document.getElementById('openTariffBtn');
+const energyDisplay = document.getElementById('energyDisplay');
+const addEnergyIcon = document.getElementById('addEnergyIcon');
 const tariffModal = document.getElementById('tariffModal');
 const closeModal = document.getElementById('closeModal');
 const tariffCards = document.querySelectorAll('.tariff-card');
@@ -60,28 +61,25 @@ const tariffCards = document.querySelectorAll('.tariff-card');
 const urlParams = new URLSearchParams(window.location.search);
 const vkPlatform = urlParams.get('vk_platform');
 
-// ПРОВЕРКА ПЛАТФОРМЫ ВК (Жестко прячем оплату на мобилках)
+// ПРОВЕРКА ПЛАТФОРМЫ ВК
 if (vkPlatform === 'mobile_iphone' || vkPlatform === 'mobile_android' || vkPlatform === 'mobile_ipad') {
-    if (openTariffBtn) openTariffBtn.style.display = 'none';
+    // На мобилках скрываем плюсик и отключаем клик
+    if (addEnergyIcon) addEnergyIcon.style.display = 'none';
 } else {
-    if (openTariffBtn) openTariffBtn.style.display = 'block';
+    // На ПК делаем баланс кнопкой пополнения
+    energyDisplay.classList.add('clickable-energy');
     
-    // Открыть модалку
-    openTariffBtn.addEventListener('click', () => {
+    energyDisplay.addEventListener('click', () => {
         if (!USER_ID) return alert("Подождите, ID еще загружается...");
         tariffModal.style.display = 'flex';
     });
     
-    // Закрыть модалку
     closeModal.addEventListener('click', () => { tariffModal.style.display = 'none'; });
     window.addEventListener('click', (e) => { if (e.target === tariffModal) tariffModal.style.display = 'none'; });
 
-   // Обработка клика по карточкам тарифов
     tariffCards.forEach(card => {
         card.addEventListener('click', async () => {
             const amount = parseInt(card.getAttribute('data-amount'));
-            
-            // Визуальная индикация загрузки
             const originalContent = card.innerHTML;
             card.innerHTML = '<span style="margin: 0 auto; font-weight:bold;">Загрузка... ⏳</span>';
             
@@ -90,29 +88,21 @@ if (vkPlatform === 'mobile_iphone' || vkPlatform === 'mobile_android' || vkPlatf
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        user_id: USER_ID,
-                        amount: amount, 
+                        user_id: USER_ID, amount: amount, 
                         description: `Пополнение Энергии НейроБро`,
-                        platform: "vk",
-                        currency_type: "energy" // МАЯЧОК ДЛЯ СЕРВЕРА
+                        platform: "vk", currency_type: "energy"
                     })
                 });
                 const result = await response.json();
                 
                 if (result.success && result.payment_url) {
-                    // Пытаемся открыть ссылку через мост ВК
                     try {
                         await vkBridge.send("VKWebAppOpenUrl", {"url": result.payment_url});
                     } catch (bridgeError) {
-                        // Запасной план: если мост ВК дал сбой, открываем обычной ссылкой браузера
-                        console.log("VK Bridge не смог открыть ссылку, используем window.open:", bridgeError);
                         window.open(result.payment_url, '_blank');
                     }
-                    
-                    // Возвращаем карточке прежний вид и закрываем модалку, чтобы не висела вечная загрузка
                     card.innerHTML = originalContent;
                     tariffModal.style.display = 'none';
-                    
                 } else {
                     alert("❌ Ошибка кассы: " + (result.detail || "Неизвестно"));
                     card.innerHTML = originalContent;
