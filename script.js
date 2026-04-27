@@ -36,7 +36,11 @@ function appendMessage(sender, text, isMarkdown = false) {
 // --- ИСТОРИЯ И ЭНЕРГИЯ ---
 async function loadHistory() {
     try {
-        const response = await fetch(`${BASE_URL}/history?user_id=${USER_ID}`, { headers: headersWithSign });
+        // Добавляем параметр t с текущим временем и cache: 'no-store', чтобы убить кэширование
+        const response = await fetch(`${BASE_URL}/history?user_id=${USER_ID}&t=${Date.now()}`, { 
+            headers: headersWithSign,
+            cache: 'no-store' 
+        });
         const result = await response.json();
         if (result.success && result.history.length > 0) {
             chatBox.innerHTML = ''; 
