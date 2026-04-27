@@ -54,12 +54,22 @@ async function loadHistory() {
 async function fetchEnergy() {
     if (!USER_ID) return;
     try {
-        const response = await fetch(`${BASE_URL}/user/${USER_ID}`, { headers: headersWithSign });
+        // Добавляем t=Date.now() и cache: 'no-store', чтобы ВК и браузер всегда брали свежие данные
+        const response = await fetch(`${BASE_URL}/user/${USER_ID}?t=${Date.now()}`, { 
+            headers: headersWithSign,
+            cache: 'no-store'
+        });
         const result = await response.json();
         if (result.success && result.energy !== undefined) {
             energyCount.textContent = result.energy;
+            console.log("Энергия обновлена:", result.energy);
+        } else {
+            console.error("Ошибка получения энергии:", result.error);
+            energyCount.textContent = "0"; // Или оставить "..."
         }
-    } catch (e) { console.error("Ошибка загрузки энергии", e); }
+    } catch (e) { 
+        console.error("Ошибка загрузки энергии", e); 
+    }
 }
 
 // --- ЛОГИКА ТАРИФОВ И ЮKASSA ---
