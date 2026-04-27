@@ -166,19 +166,33 @@ if (SpeechRecognition) {
     micBtn.style.display = 'none';
 }
 
-// --- ОЧИСТКА ПАМЯТИ ---
+// --- ОЧИСТКА ПАМЯТИ (ИСПРАВЛЕНО ПОД НОВЫЙ МЕТОД) ---
 clearChatBtn.addEventListener('click', async () => {
     if (!USER_ID) return;
+    
+    // Визуальный фидбек для юзера
     chatBox.innerHTML = '<div class="message ai-message">Очищаю память... ⏳</div>';
+    
     try {
-        const response = await fetch(`${BASE_URL}/chat`, {
+        const response = await fetch(`${BASE_URL}/chat/clear`, {
             method: 'POST',
             headers: jsonHeadersWithSign,
-            body: JSON.stringify({ user_id: USER_ID, prompt: "", clear_history: true, persona: personaSelector.value }) 
+            body: JSON.stringify({ 
+                user_id: USER_ID, 
+                prompt: "" // Для очистки текст не нужен, но схема требует
+            }) 
         });
         const result = await response.json();
-        chatBox.innerHTML = `<div class="message ai-message">${result.response}</div>`;
-    } catch(e) { chatBox.innerHTML = '<div class="message ai-message">❌ Ошибка очистки.</div>'; }
+        
+        if (result.success) {
+            chatBox.innerHTML = `<div class="message ai-message">${result.response}</div>`;
+        } else {
+            chatBox.innerHTML = '<div class="message ai-message">❌ Ошибка очистки на сервере.</div>';
+        }
+    } catch(e) { 
+        console.error(e);
+        chatBox.innerHTML = '<div class="message ai-message">❌ Ошибка сети при очистке.</div>'; 
+    }
 });
 
 // --- ПРИКРЕПЛЕНИЕ ФОТО ---
