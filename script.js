@@ -2,21 +2,18 @@ let USER_ID = null;
 let currentFileUrl = null;
 const BASE_URL = 'https://neuro-master.online/api/bro';
 
-// Берем строку параметров запуска ОДИН РАЗ при старте и сохраняем намертво
+// 1. Берем строку параметров запуска ОДИН РАЗ при старте
 const rawQueryString = window.location.search.substring(1);
+
 if (!rawQueryString) {
     console.error("❌ КРИТИЧЕСКАЯ ОШИБКА: Параметры запуска ВК не найдены!");
 }
 
+// 2. Объявляем заголовки ОДИН РАЗ (это наша проходка через 403)
 const headersWithSign = { 'x-vk-sign': rawQueryString };
 const jsonHeadersWithSign = { 'Content-Type': 'application/json', 'x-vk-sign': rawQueryString };
 
-// --- КРИТИЧЕСКИ ВАЖНО ДЛЯ БЕЗОПАСНОСТИ (ЗАЩИТА ОТ IDOR) ---
-// Собираем цифровую подпись ВКонтакте из адресной строки
-const vkSign = window.location.search.substring(1); 
-const headersWithSign = { 'x-vk-sign': vkSign };
-const jsonHeadersWithSign = { 'Content-Type': 'application/json', 'x-vk-sign': vkSign };
-
+// Дальше сразу переходи к marked.setOptions...
 marked.setOptions({
     highlight: function(code, lang) {
         const language = hljs.getLanguage(lang) ? lang : 'plaintext';
