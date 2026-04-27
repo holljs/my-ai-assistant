@@ -2,6 +2,12 @@ let USER_ID = null;
 let currentFileUrl = null;
 const BASE_URL = 'https://neuro-master.online/api/bro';
 
+// --- КРИТИЧЕСКИ ВАЖНО ДЛЯ БЕЗОПАСНОСТИ (ЗАЩИТА ОТ IDOR) ---
+// Собираем цифровую подпись ВКонтакте из адресной строки
+const vkSign = window.location.search.substring(1); 
+const headersWithSign = { 'x-vk-sign': vkSign };
+const jsonHeadersWithSign = { 'Content-Type': 'application/json', 'x-vk-sign': vkSign };
+
 marked.setOptions({
     highlight: function(code, lang) {
         const language = hljs.getLanguage(lang) ? lang : 'plaintext';
@@ -14,6 +20,7 @@ const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
 const clearChatBtn = document.getElementById('clearChatBtn');
 const modelSelector = document.getElementById('modelSelector');
+const personaSelector = document.getElementById('personaSelector');
 const energyCount = document.getElementById('energyCount');
 
 // --- ОТОБРАЖЕНИЕ СООБЩЕНИЙ ---
@@ -29,7 +36,7 @@ function appendMessage(sender, text, isMarkdown = false) {
 // --- ИСТОРИЯ И ЭНЕРГИЯ ---
 async function loadHistory() {
     try {
-        const response = await fetch(`${BASE_URL}/history?user_id=${USER_ID}`);
+        const response = await fetch(`${BASE_URL}/history?user_id=${USER_ID}`, { headers: headersWithSign });
         const result = await response.json();
         if (result.success && result.history.length > 0) {
             chatBox.innerHTML = ''; 
@@ -43,7 +50,7 @@ async function loadHistory() {
 async function fetchEnergy() {
     if (!USER_ID) return;
     try {
-        const response = await fetch(`${BASE_URL}/user/${USER_ID}`);
+        const response = await fetch(`${BASE_URL}/user/${USER_ID}`, { headers: headersWithSign });
         const result = await response.json();
         if (result.success && result.energy !== undefined) {
             energyCount.textContent = result.energy;
@@ -61,59 +68,57 @@ const tariffCards = document.querySelectorAll('.tariff-card');
 const urlParams = new URLSearchParams(window.location.search);
 const vkPlatform = urlParams.get('vk_platform');
 
-// ПРОВЕРКА ПЛАТФОРМЫ ВК
+// На мобилках просто скрываем плюсик, но логику клика оставляем ДЛЯ ВСЕХ УСТРОЙСТВ!
 if (vkPlatform === 'mobile_iphone' || vkPlatform === 'mobile_android' || vkPlatform === 'mobile_ipad') {
-    // На мобилках скрываем плюсик и отключаем клик
     if (addEnergyIcon) addEnergyIcon.style.display = 'none';
-} else {
-    // На ПК делаем баланс кнопкой пополнения
-    energyDisplay.classList.add('clickable-energy');
-    
-    energyDisplay.addEventListener('click', () => {
-        if (!USER_ID) return alert("Подождите, ID еще загружается...");
-        tariffModal.style.display = 'flex';
-    });
-    
-    closeModal.addEventListener('click', () => { tariffModal.style.display = 'none'; });
-    window.addEventListener('click', (e) => { if (e.target === tariffModal) tariffModal.style.display = 'none'; });
+}
 
-    tariffCards.forEach(card => {
-        card.addEventListener('click', async () => {
-            const amount = parseInt(card.getAttribute('data-amount'));
-            const originalContent = card.innerHTML;
-            card.innerHTML = '<span style="margin: 0 auto; font-weight:bold;">Загрузка... ⏳</span>';
+// Привязываем клик к балансу безусловно (исправление бага на MacOS/PC)
+energyDisplay.classList.add('clickable-energy');
+energyDisplay.addEventListener('click', () => {
+    if (!USER_ID) return alert("Подождите, ID еще загружается...");
+    tariffModal.style.display = 'flex';
+});
+
+closeModal.addEventListener('click', () => { tariffModal.style.display = 'none'; });
+window.addEventListener('click', (e) => { if (e.target === tariffModal) tariffModal.style.display = 'none'; });
+
+tariffCards.forEach(card => {
+    card.addEventListener('click', async () => {
+        const amount = parseInt(card.getAttribute('data-amount'));
+        const originalContent = card.innerHTML;
+        card.innerHTML = '<span style="margin: 0 auto; font-weight:bold;">Загрузка... ⏳</span>';
+        
+        try {
+            const response = await fetch('https://neuro-master.online/api/yookassa/create-payment', {
+                method: 'POST',
+                headers: jsonHeadersWithSign,
+                body: JSON.stringify({
+                    user_id: USER_ID, amount: amount, 
+                    description: `Пополнение Энергии НейроБро`,
+                    platform: "vk", currency_type: "energy"
+                })
+            });
+            const result = await response.json();
             
-            try {
-                const response = await fetch('https://neuro-master.online/api/yookassa/create-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: USER_ID, amount: amount, 
-                        description: `Пополнение Энергии НейроБро`,
-                        platform: "vk", currency_type: "energy"
-                    })
-                });
-                const result = await response.json();
-                
-                if (result.success && result.payment_url) {
-                    try {
-                        await vkBridge.send("VKWebAppOpenUrl", {"url": result.payment_url});
-                    } catch (bridgeError) {
-                        window.open(result.payment_url, '_blank');
-                    }
-                    card.innerHTML = originalContent;
-                    tariffModal.style.display = 'none';
-                } else {
-                    alert("❌ Ошибка кассы: " + (result.detail || "Неизвестно"));
-                    card.innerHTML = originalContent;
+            if (result.success && result.payment_url) {
+                try {
+                    await vkBridge.send("VKWebAppOpenUrl", {"url": result.payment_url});
+                } catch (bridgeError) {
+                    window.open(result.payment_url, '_blank');
                 }
-            } catch (e) {
-                alert("🌐 Ошибка сети при платеже.");
+                card.innerHTML = originalContent;
+                tariffModal.style.display = 'none';
+            } else {
+                alert("❌ Ошибка кассы: " + (result.detail || "Неизвестно"));
                 card.innerHTML = originalContent;
             }
-        });
+        } catch (e) {
+            alert("🌐 Ошибка сети при платеже.");
+            card.innerHTML = originalContent;
+        }
     });
-}
+});
 
 // --- ГОЛОСОВОЙ ВВОД (Микрофон) ---
 const micBtn = document.getElementById('micBtn');
@@ -129,7 +134,7 @@ if (SpeechRecognition) {
             recognition.start();
             micBtn.classList.add('recording');
             userInput.placeholder = "Слушаю вас...";
-        } catch (e) { console.log("Запись уже идет."); }
+        } catch (e) { console.log("Запись уже идет или заблокирована браузером."); }
     });
 
     recognition.onresult = (event) => {
@@ -148,7 +153,10 @@ if (SpeechRecognition) {
     recognition.onerror = (event) => {
         micBtn.classList.remove('recording');
         userInput.placeholder = "Спроси меня о чем угодно...";
-        if (event.error !== 'no-speech') alert("Ошибка микрофона.");
+        if (event.error !== 'no-speech') {
+            console.error("Mic error:", event.error);
+            alert("Ошибка доступа к микрофону. Разрешите доступ в настройках браузера.");
+        }
     };
 } else {
     micBtn.style.display = 'none';
@@ -161,8 +169,8 @@ clearChatBtn.addEventListener('click', async () => {
     try {
         const response = await fetch(`${BASE_URL}/chat`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: USER_ID, prompt: "", clear_history: true }) 
+            headers: jsonHeadersWithSign,
+            body: JSON.stringify({ user_id: USER_ID, prompt: "", clear_history: true, persona: personaSelector.value }) 
         });
         const result = await response.json();
         chatBox.innerHTML = `<div class="message ai-message">${result.response}</div>`;
@@ -185,7 +193,9 @@ fileInput.addEventListener('change', async (e) => {
 
     try {
         const response = await fetch('https://neuro-master.online/api/upload', {
-            method: 'POST', body: formData
+            method: 'POST', 
+            headers: headersWithSign, // Передаем подпись для загрузки файлов
+            body: formData
         });
         const result = await response.json();
         if (result.success) {
@@ -197,15 +207,20 @@ fileInput.addEventListener('change', async (e) => {
     } catch (e) { appendMessage('ai', `🌐 Ошибка сети при отправке файла.`); }
 });
 
-// --- ОТПРАВКА СООБЩЕНИЯ ---
+// --- ОТПРАВКА СООБЩЕНИЯ (Исправлен баг со спамом) ---
 async function sendMessage() {
+    if (sendBtn.disabled) return; // ЖЕСТКАЯ БЛОКИРОВКА ОТ СПАМА
+    
     const text = userInput.value.trim();
     if (!text && !currentFileUrl) return; 
     if (!USER_ID) return alert("Подождите, ваш VK ID еще не загрузился.");
 
     appendMessage('user', text || "Анализ фото");
     userInput.value = '';
+    
+    // Отключаем ввод на время генерации ответа
     sendBtn.disabled = true;
+    userInput.disabled = true; 
 
     const loadingId = 'loading-' + Date.now();
     const loadingDiv = document.createElement('div');
@@ -218,17 +233,18 @@ async function sendMessage() {
     try {
         const response = await fetch(`${BASE_URL}/chat`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: jsonHeadersWithSign,
             body: JSON.stringify({ 
                 user_id: USER_ID, 
                 prompt: text || "Опиши фото", 
                 model_type: modelSelector.value,
+                persona: personaSelector.value, // ПЕРЕДАЕМ ВЫБРАННУЮ РОЛЬ
                 attachments: currentFileUrl ? [currentFileUrl] : []
             }) 
         });
         const result = await response.json();
         
-        document.getElementById(loadingId).remove();
+        if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
         currentFileUrl = null; 
 
         if (result.success) {
@@ -241,7 +257,10 @@ async function sendMessage() {
         if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
         appendMessage('ai', '🌐 Ошибка сети. Проверьте интернет.');
     } finally {
+        // Возвращаем активность полям
         sendBtn.disabled = false;
+        userInput.disabled = false;
+        userInput.focus();
     }
 }
 
