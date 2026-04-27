@@ -9,11 +9,11 @@ if (!rawQueryString) {
     console.error("❌ КРИТИЧЕСКАЯ ОШИБКА: Параметры запуска ВК не найдены!");
 }
 
-// 2. Объявляем заголовки ОДИН РАЗ (это наша проходка через 403)
+// 2. Объявляем заголовки ОДИН РАЗ (это пропуск через 403 ошибку)
 const headersWithSign = { 'x-vk-sign': rawQueryString };
 const jsonHeadersWithSign = { 'Content-Type': 'application/json', 'x-vk-sign': rawQueryString };
 
-// Дальше сразу переходи к marked.setOptions...
+// ТЕПЕРЬ СРАЗУ ПЕРЕХОДИМ К НАСТРОЙКАМ MARKED
 marked.setOptions({
     highlight: function(code, lang) {
         const language = hljs.getLanguage(lang) ? lang : 'plaintext';
