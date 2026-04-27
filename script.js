@@ -2,6 +2,15 @@ let USER_ID = null;
 let currentFileUrl = null;
 const BASE_URL = 'https://neuro-master.online/api/bro';
 
+// Берем строку параметров запуска ОДИН РАЗ при старте и сохраняем намертво
+const rawQueryString = window.location.search.substring(1);
+if (!rawQueryString) {
+    console.error("❌ КРИТИЧЕСКАЯ ОШИБКА: Параметры запуска ВК не найдены!");
+}
+
+const headersWithSign = { 'x-vk-sign': rawQueryString };
+const jsonHeadersWithSign = { 'Content-Type': 'application/json', 'x-vk-sign': rawQueryString };
+
 // --- КРИТИЧЕСКИ ВАЖНО ДЛЯ БЕЗОПАСНОСТИ (ЗАЩИТА ОТ IDOR) ---
 // Собираем цифровую подпись ВКонтакте из адресной строки
 const vkSign = window.location.search.substring(1); 
