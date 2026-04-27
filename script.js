@@ -10,8 +10,8 @@ if (!rawQueryString) {
 }
 
 // 2. Объявляем заголовки ОДИН РАЗ (это пропуск через 403 ошибку)
-const headersWithSign = { 'x-vk-sign': rawQueryString };
-const jsonHeadersWithSign = { 'Content-Type': 'application/json', 'x-vk-sign': rawQueryString };
+const headersWithSign = { 'X-VK-Signature': rawQueryString };
+const jsonHeadersWithSign = { 'Content-Type': 'application/json', 'X-VK-Signature': rawQueryString };
 
 // ТЕПЕРЬ СРАЗУ ПЕРЕХОДИМ К НАСТРОЙКАМ MARKED
 marked.setOptions({
