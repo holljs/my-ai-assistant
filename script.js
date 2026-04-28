@@ -2,19 +2,18 @@ let USER_ID = null;
 let currentFileUrl = null;
 const BASE_URL = 'https://neuro-master.online/api/bro';
 
-// 1. Берем строку параметров запуска ОДИН РАЗ при старте. 
-// Это наш ключ к серверу, который Nginx теперь не заблокирует.
-const rawQueryString = window.location.search.substring(1);
+// Фикс для мобилок: берем параметры и из search, и из hash
+const rawQueryString = (window.location.search || window.location.hash.replace('#', '?')).replace('?', '');
 
 if (!rawQueryString) {
     console.error("❌ КРИТИЧЕСКАЯ ОШИБКА: Параметры запуска ВК не найдены!");
 }
 
-// Заголовок без подчеркиваний, чтобы Nginx его не вырезал
-const headersWithSign = { 'X-VK-Signature': rawQueryString };
+// Возвращаем старый рабочий заголовок
+const headersWithSign = { 'x-vk-sign': rawQueryString };
 const jsonHeadersWithSign = { 
     'Content-Type': 'application/json', 
-    'X-VK-Signature': rawQueryString 
+    'x-vk-sign': rawQueryString 
 };
 
 marked.setOptions({
