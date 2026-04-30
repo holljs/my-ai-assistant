@@ -281,23 +281,25 @@ async function initApp() {
     } catch (e) { setTimeout(initApp, 2000); }
 }
 
-// --- СПРАВКА ПО МОДЕЛЯМ ---
+// --- КРАСИВАЯ СПРАВКА ПО МОДЕЛЯМ ---
 const helpModelsBtn = document.getElementById('helpModelsBtn');
-if (helpModelsBtn) {
+const helpModal = document.getElementById('helpModal');
+const closeHelpModal = document.getElementById('closeHelpModal');
+
+if (helpModelsBtn && helpModal) {
+    // Открываем модалку
     helpModelsBtn.addEventListener('click', () => {
-        const helpText = `
-🧠 Справка по нейросетям:
-
-⚡ Быстрая (Flash)
-Идеально для обычных вопросов, перевода текстов и быстрого общения.
-
-🤔 Думающая (DeepSeek R1)
-Для сложных логических задач. Нейросеть сначала глубоко рассуждает, а потом выдает точный ответ.
-
-👑 Pro-режим (Pro 3.1)
-Флагманская модель. Для написания больших статей, программирования и анализа данных.
-        `;
-        alert(helpText);
+        helpModal.style.display = 'flex';
+    });
+    
+    // Закрываем по крестику
+    closeHelpModal.addEventListener('click', () => {
+        helpModal.style.display = 'none';
+    });
+    
+    // Закрываем по клику мимо окна
+    window.addEventListener('click', (e) => { 
+        if (e.target === helpModal) helpModal.style.display = 'none'; 
     });
 }
 
