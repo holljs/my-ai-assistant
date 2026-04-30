@@ -42,7 +42,8 @@ body {
 .energy-badge {
     font-weight: 600; font-size: 13px; background: rgba(255,255,255,0.15); 
     padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); 
-    display: flex; align-items: center; gap: 6px; cursor: default;
+    display: flex; align-items: center; gap: 6px; 
+    cursor: pointer; /* <-- ИЗМЕНИЛИ ЭТО СЛОВО */
     backdrop-filter: blur(5px);
 }
 
