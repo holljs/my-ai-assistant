@@ -220,6 +220,55 @@ userInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
 
+// --- ГОЛОСОВОЙ ВВОД ---
+const micBtn = document.getElementById('micBtn');
+
+// Проверяем, поддерживает ли браузер/телефон распознавание речи
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ru-RU'; // Распознаем русскую речь
+    recognition.interimResults = false; // Ждем, пока юзер договорит
+
+    micBtn.addEventListener('click', () => {
+        try {
+            recognition.start();
+            micBtn.style.color = '#ff4757'; // Красим микрофон в красный, пока слушаем
+            userInput.placeholder = "Слушаю вас...";
+        } catch (e) {
+            // Если уже слушает - ничего не делаем
+        }
+    });
+
+    recognition.addEventListener('result', (e) => {
+        const transcript = e.results[0][0].transcript;
+        // Добавляем сказанное в поле ввода
+        userInput.value += (userInput.value ? ' ' : '') + transcript;
+    });
+
+    recognition.addEventListener('end', () => {
+        // Возвращаем обычный цвет и текст
+        micBtn.style.color = ''; 
+        userInput.placeholder = "Спроси меня о чем угодно...";
+    });
+
+    recognition.addEventListener('error', (e) => {
+        console.error('Ошибка микрофона:', e.error);
+        micBtn.style.color = '';
+        userInput.placeholder = "Спроси меня о чем угодно...";
+        
+        if (e.error === 'not-allowed') {
+            alert("Разрешите доступ к микрофону в настройках браузера или ВК!");
+        }
+    });
+} else {
+    // Если это совсем старый браузер или iPhone с ограничениями
+    micBtn.addEventListener('click', () => {
+        alert("К сожалению, ваше устройство или браузер не поддерживает голосовой ввод. 😔");
+    });
+}
+
 // --- ЗАПУСК ---
 async function initApp() {
     try {
