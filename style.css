@@ -179,3 +179,21 @@ body {
 .t-price { font-size: 18px; font-weight: 800; color: #1E293B; }
 .t-energy { font-size: 14px; font-weight: 600; color: #1A73E8; background: white; padding: 4px 10px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .modal-footer-text { font-size: 11px; color: #94A3B8; margin-top: 15px; font-weight: 500;}
+
+/* --- ФИКС ВЫДЕЛЕНИЯ ТЕКСТА --- */
+.message {
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+}
+
+/* --- МОБИЛЬНЫЕ ПРАВИЛА (ПРЯЧЕМ ПЛЮСИК) --- */
+@media (max-width: 768px) {
+    #addEnergyIcon {
+        display: none !important; /* Убираем плюс на мобилках */
+    }
+    #energyDisplay {
+        cursor: default;
+    }
+}
