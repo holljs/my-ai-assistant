@@ -142,8 +142,10 @@ fileInput.addEventListener('change', async (e) => {
     appendMessage('ai', `⏳ Загружаю фото...`);
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('user_id', USER_ID); // <-- ДОБАВИЛИ ДЛЯ БЕЗОПАСНОСТИ
+
     try {
-        const response = await fetch('https://neuro-master.online/api/upload', {
+        const response = await fetch(`${BASE_URL}/upload`, { // <-- ИЗМЕНИЛИ АДРЕС НА УМНЫЙ
             method: 'POST', 
             headers: headersWithSign,
             body: formData
@@ -151,9 +153,17 @@ fileInput.addEventListener('change', async (e) => {
         const result = await response.json();
         if (result.success) {
             currentFileUrl = result.url;
-            appendMessage('ai', `✅ Фото загружено!`);
+            // Убираем часики и пишем, что загружено
+            const messages = chatBox.querySelectorAll('.ai-message');
+            const lastMessage = messages[messages.length - 1];
+            if(lastMessage && lastMessage.textContent.includes('Загружаю фото')) {
+                lastMessage.remove();
+            }
+            appendMessage('ai', `✅ Фото загружено! Теперь напиши свой вопрос к нему.`);
+        } else {
+            appendMessage('ai', `❌ Ошибка: ` + result.error);
         }
-    } catch (e) { appendMessage('ai', `🌐 Ошибка сети.`); }
+    } catch (e) { appendMessage('ai', `🌐 Ошибка сети при загрузке.`); }
 });
 
 // --- ОТПРАВКА СООБЩЕНИЯ ---
