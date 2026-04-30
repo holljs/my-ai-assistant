@@ -31,12 +31,50 @@ const modelSelector = document.getElementById('modelSelector');
 const personaSelector = document.getElementById('personaSelector');
 const energyCount = document.getElementById('energyCount');
 
-// --- ОТОБРАЖЕНИЕ СООБЩЕНИЙ ---
+// --- ОТОБРАЖЕНИЕ СООБЩЕНИЙ С КНОПКОЙ КОПИРОВАНИЯ ---
 function appendMessage(sender, text, isMarkdown = false) {
     const div = document.createElement('div');
     div.className = `message ${sender}-message`;
-    if (isMarkdown) { div.innerHTML = marked.parse(text); } 
-    else { div.textContent = text; }
+    
+    // Добавляем текст или форматирование
+    if (isMarkdown) { 
+        div.innerHTML = marked.parse(text); 
+    } else { 
+        div.textContent = text; 
+    }
+
+    // ДОБАВЛЯЕМ КНОПКУ "СКОПИРОВАТЬ" ТОЛЬКО ДЛЯ ОТВЕТОВ ИИ
+    // Проверяем, что это ИИ и это не временное сообщение с песочными часами
+    if (sender === 'ai' && !text.includes('⏳') && !text.includes('Привет! Я твой НейроБро') && !text.includes('❌')) {
+        const copyBtn = document.createElement('button');
+        copyBtn.innerHTML = '📋 Скопировать';
+        // Делаем кнопку стильной и аккуратной
+        copyBtn.style.cssText = 'display: block; margin-top: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-family: Montserrat, sans-serif; transition: all 0.2s;';
+        
+        copyBtn.onclick = () => {
+            // Копируем исходный чистый текст
+            navigator.clipboard.writeText(text).then(() => {
+                // Красивая анимация успеха
+                copyBtn.innerHTML = '✅ Скопировано!';
+                copyBtn.style.background = 'rgba(74, 222, 128, 0.15)';
+                copyBtn.style.color = '#4ade80';
+                copyBtn.style.borderColor = '#4ade80';
+                
+                // Возвращаем кнопку в исходное состояние через 2 секунды
+                setTimeout(() => {
+                    copyBtn.innerHTML = '📋 Скопировать';
+                    copyBtn.style.background = 'rgba(255,255,255,0.1)';
+                    copyBtn.style.color = '#cbd5e1';
+                    copyBtn.style.borderColor = 'rgba(255,255,255,0.2)';
+                }, 2000);
+            }).catch(() => {
+                alert("Не удалось скопировать. Разрешите доступ к буферу обмена.");
+            });
+        };
+        
+        div.appendChild(copyBtn);
+    }
+
     chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
 }
@@ -82,7 +120,18 @@ const closeModal = document.getElementById('closeModal');
 const tariffCards = document.querySelectorAll('.tariff-card');
 
 energyDisplay.addEventListener('click', () => {
-    if (!USER_ID) return alert("Загрузка профиля...");
+    if (!USER_ID) return;
+
+    // Проверяем, сидит ли юзер с мобилки
+    const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobile) {
+        // Полная тишина. ВК запрещает упоминать пополнение с телефона.
+        // Поэтому мы просто выходим из функции, ничего не открывая и ничего не сообщая.
+        return; 
+    }
+
+    // Если это ПК - спокойно открываем тарифы
     tariffModal.style.display = 'flex';
 });
 
