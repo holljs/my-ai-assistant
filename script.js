@@ -232,4 +232,24 @@ async function initApp() {
     } catch (e) { setTimeout(initApp, 2000); }
 }
 
+// --- СПРАВКА ПО МОДЕЛЯМ ---
+const helpModelsBtn = document.getElementById('helpModelsBtn');
+if (helpModelsBtn) {
+    helpModelsBtn.addEventListener('click', () => {
+        const helpText = `
+🧠 Справка по нейросетям:
+
+⚡ Быстрая (Flash)
+Идеально для обычных вопросов, перевода текстов и быстрого общения.
+
+🤔 Думающая (DeepSeek R1)
+Для сложных логических задач. Нейросеть сначала глубоко рассуждает, а потом выдает точный ответ.
+
+👑 Pro-режим (Pro 3.1)
+Флагманская модель. Для написания больших статей, программирования и анализа данных.
+        `;
+        alert(helpText);
+    });
+}
+
 vkBridge.send('VKWebAppInit').then(() => initApp());
