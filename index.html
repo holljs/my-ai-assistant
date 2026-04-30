@@ -38,9 +38,9 @@
                 
                 <div style="display: flex; align-items: center; gap: 5px;">
                     <select id="modelSelector" class="modern-select">
-                        <option value="gpt4o_mini">Быстрая</option>
-                        <option value="gemini_flash">Думающая</option>
-                        <option value="gemini_31_pro">Pro-режим</option>
+                        <option value="gpt4o_mini">⚡ Быстрая (3 ⚡)</option>
+                        <option value="gemini_flash">🤔 Думающая (10 ⚡)</option>
+                        <option value="gemini_31_pro">👑 Pro-режим (50 ⚡)</option>
                     </select>
                     <button id="helpModelsBtn" class="icon-btn" style="width: 24px; height: 24px; font-size: 12px; font-weight: bold;" title="Справка по моделям">?</button>
                 </div>
@@ -98,6 +98,22 @@
                 </button>
             </div>
             <p class="modal-footer-text">Оплата картой, SberPay или СБП.</p>
+        </div>
+    </div>
+
+    <!-- КРАСИВОЕ ОКНО СПРАВКИ ПО МОДЕЛЯМ -->
+    <div id="helpModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="text-align: left;">
+            <span class="close-modal" id="closeHelpModal">&times;</span>
+            <h2 class="modal-title" style="margin-bottom: 15px;">Режимы работы 🧠</h2>
+            <div style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #e2e8f0;">
+                <p><b>⚡ Быстрая (3 ⚡)</b><br><span style="color: #94a3b8;">Идеально для простых вопросов, коротких постов и перевода. Отвечает мгновенно!</span></p>
+                <p style="margin-top: 10px;"><b>🤔 Думающая (10 ⚡)</b><br><span style="color: #94a3b8;">Справляется со сложной логикой, задачками и большими текстами. Оптимальный баланс.</span></p>
+                <p style="margin-top: 10px;"><b>👑 Pro-режим (50 ⚡)</b><br><span style="color: #94a3b8;">Самый мощный интеллект. Для больших статей, сложного кода и глубокого анализа. Самые развернутые ответы.</span></p>
+                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #334155; font-size: 13px; color: #fbbf24;">
+                    <i>📸 Прикрепление фото: +3 ⚡ к стоимости запроса.</i>
+                </div>
+            </div>
         </div>
     </div>
     
