@@ -188,13 +188,17 @@ attachBtn.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    
+    // 🧹 МАГИЧЕСКАЯ СТРОЧКА: сбрасываем инпут, чтобы скрепка не "зависала"
+    fileInput.value = ''; 
+
     appendMessage('ai', `⏳ Загружаю фото...`);
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('user_id', USER_ID); // <-- ДОБАВИЛИ ДЛЯ БЕЗОПАСНОСТИ
+    formData.append('user_id', USER_ID);
 
     try {
-        const response = await fetch(`${BASE_URL}/upload`, { // <-- ИЗМЕНИЛИ АДРЕС НА УМНЫЙ
+        const response = await fetch(`${BASE_URL}/upload`, { 
             method: 'POST', 
             headers: headersWithSign,
             body: formData
