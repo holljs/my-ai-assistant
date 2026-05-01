@@ -45,7 +45,7 @@ function appendMessage(sender, text, isMarkdown = false) {
 
     // ДОБАВЛЯЕМ КНОПКУ "СКОПИРОВАТЬ" ТОЛЬКО ДЛЯ ОТВЕТОВ ИИ
     // Проверяем, что это ИИ и это не временное сообщение с песочными часами
-    if (sender === 'ai' && !text.includes('⏳') && !text.includes('Привет! Я твой НейроБро') && !text.includes('❌')) {
+    if (sender === 'ai' && !text.includes('⏳') && !text.includes('Привет! Я твой НейроБро') && !text.includes('❌') && !text.includes('Фото загружено')) {
         const copyBtn = document.createElement('button');
         copyBtn.innerHTML = '📋 Скопировать';
         // Делаем кнопку стильной и аккуратной
@@ -204,19 +204,28 @@ fileInput.addEventListener('change', async (e) => {
             body: formData
         });
         const result = await response.json();
+        
         if (result.success) {
             currentFileUrl = result.url;
-            // Убираем часики и пишем, что загружено
+            
+            // Убираем часики
             const messages = chatBox.querySelectorAll('.ai-message');
             const lastMessage = messages[messages.length - 1];
             if(lastMessage && lastMessage.textContent.includes('Загружаю фото')) {
                 lastMessage.remove();
             }
-            appendMessage('ai', `✅ Фото загружено! Теперь напиши свой вопрос к нему.`);
+            
+            // 👇 ВОТ ЗДЕСЬ ГЛАВНОЕ ИЗМЕНЕНИЕ: рисуем картинку вместо скучного текста 👇
+            const imgHtml = `<img src="${currentFileUrl}" style="max-width: 100%; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><br><b>✅ Фото загружено!</b> Теперь напиши свой вопрос к нему.`;
+            appendMessage('ai', imgHtml, true); 
+            // 👆 КОНЕЦ ИЗМЕНЕНИЯ 👆
+            
         } else {
             appendMessage('ai', `❌ Ошибка: ` + result.error);
         }
-    } catch (e) { appendMessage('ai', `🌐 Ошибка сети при загрузке.`); }
+    } catch (e) { 
+        appendMessage('ai', `🌐 Ошибка сети при загрузке.`); 
+    }
 });
 
 // --- ОТПРАВКА СООБЩЕНИЯ ---
