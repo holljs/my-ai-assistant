@@ -2,14 +2,12 @@ let USER_ID = null;
 let currentFileUrl = null;
 const BASE_URL = 'https://neuro-master.online/api/bro';
 
-// Фикс для мобилок: берем параметры и из search, и из hash
 const rawQueryString = (window.location.search || window.location.hash.replace('#', '?')).replace('?', '');
 
 if (!rawQueryString) {
     console.error("❌ КРИТИЧЕСКАЯ ОШИБКА: Параметры запуска ВК не найдены!");
 }
 
-// Возвращаем старый рабочий заголовок
 const headersWithSign = { 'x-vk-sign': rawQueryString };
 const jsonHeadersWithSign = { 
     'Content-Type': 'application/json', 
@@ -31,36 +29,29 @@ const modelSelector = document.getElementById('modelSelector');
 const personaSelector = document.getElementById('personaSelector');
 const energyCount = document.getElementById('energyCount');
 
-// --- ОТОБРАЖЕНИЕ СООБЩЕНИЙ С КНОПКОЙ КОПИРОВАНИЯ ---
+// --- ОТОБРАЖЕНИЕ СООБЩЕНИЙ ---
 function appendMessage(sender, text, isMarkdown = false) {
     const div = document.createElement('div');
     div.className = `message ${sender}-message`;
     
-    // Добавляем текст или форматирование
     if (isMarkdown) { 
         div.innerHTML = marked.parse(text); 
     } else { 
         div.textContent = text; 
     }
 
-    // ДОБАВЛЯЕМ КНОПКУ "СКОПИРОВАТЬ" ТОЛЬКО ДЛЯ ОТВЕТОВ ИИ
-    // Проверяем, что это ИИ и это не временное сообщение с песочными часами
     if (sender === 'ai' && !text.includes('⏳') && !text.includes('Привет! Я твой НейроБро') && !text.includes('❌') && !text.includes('Фото загружено')) {
         const copyBtn = document.createElement('button');
         copyBtn.innerHTML = '📋 Скопировать';
-        // Делаем кнопку стильной и аккуратной
         copyBtn.style.cssText = 'display: block; margin-top: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-family: Montserrat, sans-serif; transition: all 0.2s;';
         
         copyBtn.onclick = () => {
-            // Копируем исходный чистый текст
             navigator.clipboard.writeText(text).then(() => {
-                // Красивая анимация успеха
                 copyBtn.innerHTML = '✅ Скопировано!';
                 copyBtn.style.background = 'rgba(74, 222, 128, 0.15)';
                 copyBtn.style.color = '#4ade80';
                 copyBtn.style.borderColor = '#4ade80';
                 
-                // Возвращаем кнопку в исходное состояние через 2 секунды
                 setTimeout(() => {
                     copyBtn.innerHTML = '📋 Скопировать';
                     copyBtn.style.background = 'rgba(255,255,255,0.1)';
@@ -71,7 +62,6 @@ function appendMessage(sender, text, isMarkdown = false) {
                 alert("Не удалось скопировать. Разрешите доступ к буферу обмена.");
             });
         };
-        
         div.appendChild(copyBtn);
     }
 
@@ -113,7 +103,7 @@ async function fetchEnergy() {
     } catch (e) { console.error("Ошибка энергии", e); }
 }
 
-// --- ЛОГИКА ТАРИФОВ И ЮKASSA ---
+// --- ТАРИФЫ И ЮKASSA ---
 const energyDisplay = document.getElementById('energyDisplay');
 const tariffModal = document.getElementById('tariffModal');
 const closeModal = document.getElementById('closeModal');
@@ -121,17 +111,8 @@ const tariffCards = document.querySelectorAll('.tariff-card');
 
 energyDisplay.addEventListener('click', () => {
     if (!USER_ID) return;
-
-    // Проверяем, сидит ли юзер с мобилки
     const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-    if (isMobile) {
-        // Полная тишина. ВК запрещает упоминать пополнение с телефона.
-        // Поэтому мы просто выходим из функции, ничего не открывая и ничего не сообщая.
-        return; 
-    }
-
-    // Если это ПК - спокойно открываем тарифы
+    if (isMobile) return; 
     tariffModal.style.display = 'flex';
 });
 
@@ -176,8 +157,8 @@ clearChatBtn.addEventListener('click', async () => {
             body: JSON.stringify({ user_id: USER_ID, prompt: "" }) 
         });
         const result = await response.json();
-        chatBox.innerHTML = `<div class="message ai-message">${result.response}</div>`;
-    } catch(e) { chatBox.innerHTML = '❌ Ошибка'; }
+        chatBox.innerHTML = `<div class="message ai-message">${result.response || 'Память очищена! 🧹'}</div>`;
+    } catch(e) { chatBox.innerHTML = '<div class="message ai-message">❌ Ошибка очистки</div>'; }
 });
 
 // --- ПРИКРЕПЛЕНИЕ ФОТО ---
@@ -189,7 +170,6 @@ fileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
-    // 🧹 МАГИЧЕСКАЯ СТРОЧКА: сбрасываем инпут, чтобы скрепка не "зависала"
     fileInput.value = ''; 
 
     appendMessage('ai', `⏳ Загружаю фото...`);
@@ -205,23 +185,20 @@ fileInput.addEventListener('change', async (e) => {
         });
         const result = await response.json();
         
+        const messages = chatBox.querySelectorAll('.ai-message');
+        const lastMessage = messages[messages.length - 1];
+        if(lastMessage && lastMessage.textContent.includes('Загружаю фото')) {
+            lastMessage.remove();
+        }
+        
         if (result.success) {
             currentFileUrl = result.url;
-            
-            // Убираем часики
-            const messages = chatBox.querySelectorAll('.ai-message');
-            const lastMessage = messages[messages.length - 1];
-            if(lastMessage && lastMessage.textContent.includes('Загружаю фото')) {
-                lastMessage.remove();
-            }
-            
-            // 👇 ВОТ ЗДЕСЬ ГЛАВНОЕ ИЗМЕНЕНИЕ: рисуем картинку вместо скучного текста 👇
             const imgHtml = `<img src="${currentFileUrl}" style="max-width: 100%; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><br><b>✅ Фото загружено!</b> Теперь напиши свой вопрос к нему.`;
             appendMessage('ai', imgHtml, true); 
-            // 👆 КОНЕЦ ИЗМЕНЕНИЯ 👆
-            
         } else {
-            appendMessage('ai', `❌ Ошибка: ` + result.error);
+            // Читаем правильный текст ошибки с сервера
+            const err = result.detail || result.error || 'Неверный формат или размер файла.';
+            appendMessage('ai', `❌ Ошибка: ` + err);
         }
     } catch (e) { 
         appendMessage('ai', `🌐 Ошибка сети при загрузке.`); 
@@ -258,15 +235,19 @@ async function sendMessage() {
                 attachments: currentFileUrl ? [currentFileUrl] : []
             }) 
         });
+        
         const result = await response.json();
         if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
         currentFileUrl = null;
 
-        if (result.success) {
+        // Если сервер вернул success == true
+        if (response.ok && result.success !== false) {
             appendMessage('ai', result.response, true);
             fetchEnergy();
         } else {
-            appendMessage('ai', '❌ ' + (result.error || 'Ошибка'));
+            // Читаем ошибку из detail (это стандарт FastAPI)
+            const errorMsg = result.detail || result.error || 'Неизвестная ошибка сервера';
+            appendMessage('ai', '❌ ' + errorMsg);
         }
     } catch (e) {
         if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
@@ -278,39 +259,42 @@ async function sendMessage() {
 }
 
 sendBtn.addEventListener('click', sendMessage);
-userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+
+// ИСПРАВЛЕНИЕ: Enter переносит строку на мобилке (Баг 8)
+userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { 
+        if (window.innerWidth <= 768) {
+            return; // На телефоне ничего не блокируем, строка перенесется сама
+        }
+        // На компьютере блокируем перенос и отправляем
+        e.preventDefault(); 
+        sendMessage(); 
+    }
 });
 
 // --- ГОЛОСОВОЙ ВВОД ---
 const micBtn = document.getElementById('micBtn');
-
-// Проверяем, поддерживает ли браузер/телефон распознавание речи
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (SpeechRecognition) {
     const recognition = new SpeechRecognition();
-    recognition.lang = 'ru-RU'; // Распознаем русскую речь
-    recognition.interimResults = false; // Ждем, пока юзер договорит
+    recognition.lang = 'ru-RU'; 
+    recognition.interimResults = false; 
 
     micBtn.addEventListener('click', () => {
         try {
             recognition.start();
-            micBtn.style.color = '#ff4757'; // Красим микрофон в красный, пока слушаем
+            micBtn.style.color = '#ff4757'; 
             userInput.placeholder = "Слушаю вас...";
-        } catch (e) {
-            // Если уже слушает - ничего не делаем
-        }
+        } catch (e) { }
     });
 
     recognition.addEventListener('result', (e) => {
         const transcript = e.results[0][0].transcript;
-        // Добавляем сказанное в поле ввода
         userInput.value += (userInput.value ? ' ' : '') + transcript;
     });
 
     recognition.addEventListener('end', () => {
-        // Возвращаем обычный цвет и текст
         micBtn.style.color = ''; 
         userInput.placeholder = "Спроси меня о чем угодно...";
     });
@@ -319,15 +303,59 @@ if (SpeechRecognition) {
         console.error('Ошибка микрофона:', e.error);
         micBtn.style.color = '';
         userInput.placeholder = "Спроси меня о чем угодно...";
-        
         if (e.error === 'not-allowed') {
             alert("Разрешите доступ к микрофону в настройках браузера или ВК!");
         }
     });
 } else {
-    // Если это совсем старый браузер или iPhone с ограничениями
     micBtn.addEventListener('click', () => {
         alert("К сожалению, ваше устройство или браузер не поддерживает голосовой ввод. 😔");
+    });
+}
+
+// --- СПРАВКА ПО МОДЕЛЯМ ---
+const helpModelsBtn = document.getElementById('helpModelsBtn');
+const helpModal = document.getElementById('helpModal');
+const closeHelpModal = document.getElementById('closeHelpModal');
+
+if (helpModelsBtn && helpModal) {
+    helpModelsBtn.addEventListener('click', () => helpModal.style.display = 'flex');
+    closeHelpModal.addEventListener('click', () => helpModal.style.display = 'none');
+    window.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.style.display = 'none'; });
+}
+
+// --- ПЕРЕХВАТ ССЫЛОК И КНОПОК ВК (ИСПРАВЛЕНИЕ БАГОВ 5 И 6) ---
+
+// Перехват обычных ссылок в тексте (чтобы не было серого экрана)
+chatBox.addEventListener('click', (e) => {
+    let link = e.target.closest('a');
+    if (link && link.href) {
+        e.preventDefault();
+        if (link.href.includes('app54451681')) {
+            vkBridge.send("VKWebAppOpenApp", { app_id: 54451681 });
+        } else {
+            vkBridge.send("VKWebAppOpenLink", { url: link.href });
+        }
+    }
+});
+
+// Кнопка "Написать в сообщество"
+const btnCommunity = document.getElementById('btnCommunity');
+if (btnCommunity) {
+    btnCommunity.addEventListener('click', (e) => {
+        e.preventDefault();
+        vkBridge.send("VKWebAppShowCommunityMessages", { group_id: 191367447 })
+            .catch(() => window.open('https://vk.com/im?sel=-191367447', '_blank'));
+    });
+}
+
+// Кнопка "Написать Наталье"
+const btnNatalia = document.getElementById('btnNatalia');
+if (btnNatalia) {
+    btnNatalia.addEventListener('click', (e) => {
+        e.preventDefault();
+        vkBridge.send("VKWebAppOpenLink", { url: 'https://vk.com/nataliselyahova' })
+            .catch(() => window.open('https://vk.com/nataliselyahova', '_blank'));
     });
 }
 
@@ -341,28 +369,6 @@ async function initApp() {
             fetchEnergy();
         }
     } catch (e) { setTimeout(initApp, 2000); }
-}
-
-// --- КРАСИВАЯ СПРАВКА ПО МОДЕЛЯМ ---
-const helpModelsBtn = document.getElementById('helpModelsBtn');
-const helpModal = document.getElementById('helpModal');
-const closeHelpModal = document.getElementById('closeHelpModal');
-
-if (helpModelsBtn && helpModal) {
-    // Открываем модалку
-    helpModelsBtn.addEventListener('click', () => {
-        helpModal.style.display = 'flex';
-    });
-    
-    // Закрываем по крестику
-    closeHelpModal.addEventListener('click', () => {
-        helpModal.style.display = 'none';
-    });
-    
-    // Закрываем по клику мимо окна
-    window.addEventListener('click', (e) => { 
-        if (e.target === helpModal) helpModal.style.display = 'none'; 
-    });
 }
 
 vkBridge.send('VKWebAppInit').then(() => initApp());
