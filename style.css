@@ -105,7 +105,41 @@ body {
 
 /* --- ЧАТ --- */
 #chat-box { flex-grow: 1; padding: 20px 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background-color: #F8FAFC; }
-.message { max-width: 85%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; word-wrap: break-word; font-weight: 500;}
+
+/* ИСПРАВЛЕНИЕ БАГОВ 2 И 7: ТЕКСТ И СПИСКИ В ГРАНИЦАХ ЭКРАНА */
+.message { 
+    max-width: 85%; 
+    padding: 12px 16px; 
+    border-radius: 16px; 
+    font-size: 14px; 
+    line-height: 1.5; 
+    font-weight: 500;
+    
+    /* Заставляем длинные слова переноситься */
+    word-wrap: break-word; 
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto; 
+    
+    /* Разрешаем выделять текст */
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+}
+
+/* Настройка списков, чтобы цифры и маркеры не улетали за край */
+.message ul, .message ol {
+    padding-left: 20px;
+    margin-left: 0;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    white-space: normal;
+}
+.message li {
+    margin-bottom: 4px;
+}
+
 .ai-message { background: #ffffff; border: 1px solid #E2E8F0; align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
 .user-message { background: #E0F2FE; color: #0369A1; align-self: flex-end; border-bottom-right-radius: 4px; }
 
@@ -180,13 +214,6 @@ body {
 .t-energy { font-size: 14px; font-weight: 600; color: #1A73E8; background: white; padding: 4px 10px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .modal-footer-text { font-size: 11px; color: #94A3B8; margin-top: 15px; font-weight: 500;}
 
-/* --- ФИКС ВЫДЕЛЕНИЯ ТЕКСТА --- */
-.message {
-    -webkit-user-select: text !important;
-    -moz-user-select: text !important;
-    -ms-user-select: text !important;
-    user-select: text !important;
-}
 
 /* --- МОБИЛЬНЫЕ ПРАВИЛА (ПРЯЧЕМ ПЛЮСИК) --- */
 @media (max-width: 768px) {
