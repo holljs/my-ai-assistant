@@ -149,6 +149,12 @@ tariffCards.forEach(card => {
 // --- ОЧИСТКА ПАМЯТИ ---
 clearChatBtn.addEventListener('click', async () => {
     if (!USER_ID) return;
+    
+    // Спрашиваем пользователя!
+    if (!confirm("Вы уверены, что хотите безвозвратно очистить историю диалога?")) {
+        return; 
+    }
+    
     chatBox.innerHTML = '<div class="message ai-message">Очищаю память... ⏳</div>';
     try {
         const response = await fetch(`${BASE_URL}/chat/clear`, {
@@ -358,6 +364,19 @@ if (btnNatalia) {
             .catch(() => window.open('https://vk.com/nataliselyahova', '_blank'));
     });
 }
+
+// --- ИСПРАВЛЕНИЕ БАГА 3: СОХРАНЕНИЕ ВЫБОРА РЕЖИМА ---
+// Загружаем сохраненные настройки при входе
+if (localStorage.getItem('bro_model')) {
+    modelSelector.value = localStorage.getItem('bro_model');
+}
+if (localStorage.getItem('bro_persona')) {
+    personaSelector.value = localStorage.getItem('bro_persona');
+}
+
+// Сохраняем, когда юзер что-то меняет
+modelSelector.addEventListener('change', (e) => localStorage.setItem('bro_model', e.target.value));
+personaSelector.addEventListener('change', (e) => localStorage.setItem('bro_persona', e.target.value));
 
 // --- ЗАПУСК ---
 async function initApp() {
