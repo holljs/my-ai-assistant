@@ -147,13 +147,28 @@ tariffCards.forEach(card => {
 });
 
 // --- ОЧИСТКА ПАМЯТИ ---
+let clearConfirmTimeout;
 clearChatBtn.addEventListener('click', async () => {
     if (!USER_ID) return;
     
-    // Спрашиваем пользователя!
-    if (!confirm("Вы уверены, что хотите безвозвратно очистить историю диалога?")) {
+    // Защита от случайного нажатия (работает везде, обходит блокировки iOS/Android)
+    if (!clearChatBtn.classList.contains('confirming')) {
+        clearChatBtn.classList.add('confirming');
+        clearChatBtn.innerHTML = '❓'; // Меняем иконку на вопрос
+        clearChatBtn.style.color = '#EF4444'; // Делаем красным
+        
+        clearConfirmTimeout = setTimeout(() => {
+            clearChatBtn.classList.remove('confirming');
+            clearChatBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+            clearChatBtn.style.color = '';
+        }, 3000); // Через 3 секунды кнопка возвращается в норму
         return; 
     }
+    
+    // Если юзер нажал второй раз (подтвердил)
+    clearTimeout(clearConfirmTimeout);
+    clearChatBtn.classList.remove('confirming');
+    clearChatBtn.style.color = '';
     
     chatBox.innerHTML = '<div class="message ai-message">Очищаю память... ⏳</div>';
     try {
@@ -165,6 +180,9 @@ clearChatBtn.addEventListener('click', async () => {
         const result = await response.json();
         chatBox.innerHTML = `<div class="message ai-message">${result.response || 'Память очищена! 🧹'}</div>`;
     } catch(e) { chatBox.innerHTML = '<div class="message ai-message">❌ Ошибка очистки</div>'; }
+    
+    // Возвращаем иконку корзины на место
+    clearChatBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
 });
 
 // --- ПРИКРЕПЛЕНИЕ ФОТО ---
@@ -266,7 +284,7 @@ async function sendMessage() {
 
 sendBtn.addEventListener('click', sendMessage);
 
-// ИСПРАВЛЕНИЕ: Enter переносит строку на мобилке (Баг 8)
+// ИСПРАВЛЕНИЕ: Enter переносит строку на мобилке
 userInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { 
         if (window.innerWidth <= 768) {
@@ -330,7 +348,7 @@ if (helpModelsBtn && helpModal) {
     window.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.style.display = 'none'; });
 }
 
-// --- ПЕРЕХВАТ ССЫЛОК И КНОПОК ВК (ИСПРАВЛЕНИЕ БАГОВ 5 И 6) ---
+// --- ПЕРЕХВАТ ССЫЛОК И КНОПОК ВК (ИСПРАВЛЕНИЕ БАГОВ) ---
 
 // Перехват обычных ссылок в тексте (чтобы не было серого экрана)
 chatBox.addEventListener('click', (e) => {
@@ -351,7 +369,9 @@ if (btnCommunity) {
     btnCommunity.addEventListener('click', (e) => {
         e.preventDefault();
         vkBridge.send("VKWebAppShowCommunityMessages", { group_id: 191367447 })
-            .catch(() => window.open('https://vk.com/im?sel=-191367447', '_blank'));
+            .catch(() => {
+                vkBridge.send("VKWebAppOpenLink", { url: 'https://vk.com/im?sel=-191367447' });
+            });
     });
 }
 
@@ -360,12 +380,11 @@ const btnNatalia = document.getElementById('btnNatalia');
 if (btnNatalia) {
     btnNatalia.addEventListener('click', (e) => {
         e.preventDefault();
-        vkBridge.send("VKWebAppOpenLink", { url: 'https://vk.com/nataliselyahova' })
-            .catch(() => window.open('https://vk.com/nataliselyahova', '_blank'));
+        vkBridge.send("VKWebAppOpenLink", { url: 'https://vk.com/nataliselyahova' });
     });
 }
 
-// --- ИСПРАВЛЕНИЕ БАГА 3: СОХРАНЕНИЕ ВЫБОРА РЕЖИМА ---
+// --- СОХРАНЕНИЕ ВЫБОРА РЕЖИМА ---
 // Загружаем сохраненные настройки при входе
 if (localStorage.getItem('bro_model')) {
     modelSelector.value = localStorage.getItem('bro_model');
