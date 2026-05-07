@@ -160,8 +160,21 @@ body {
     flex-grow: 1; padding: 12px 14px; border: 1px solid #CBD5E1; border-radius: 20px; 
     resize: none; font-family: 'Inter', sans-serif; font-size: 14px; 
     font-weight: 500; min-height: 44px; max-height: 120px; outline: none; background: #F8FAFC; transition: 0.2s;
+    overflow-y: auto; /* Включаем прокрутку */
 }
 #userInput:focus { border-color: #1A73E8; background: #fff; }
+
+/* Красивый ползунок для поля ввода */
+#userInput::-webkit-scrollbar {
+    width: 6px;
+}
+#userInput::-webkit-scrollbar-track {
+    background: transparent;
+}
+#userInput::-webkit-scrollbar-thumb {
+    background-color: #CBD5E1;
+    border-radius: 10px;
+}
 
 #sendBtn { 
     background: #1A73E8; color: white; border: none; border-radius: 50%; 
