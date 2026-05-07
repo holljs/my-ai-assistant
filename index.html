@@ -136,6 +136,17 @@
             </div>
         </div>
     </div>
+
+    <div id="confirmModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 300px; text-align: center; padding: 25px;">
+            <h3 style="margin-bottom: 10px; font-size: 18px; color: #1E293B; font-family: 'Montserrat', sans-serif;">Очистить диалог?</h3>
+            <p style="margin-bottom: 20px; font-size: 13px; color: #64748B; font-family: 'Montserrat', sans-serif;">Вся история переписки будет удалена безвозвратно.</p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="cancelClearBtn" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #CBD5E1; background: white; color: #475569; font-weight: 600; cursor: pointer;">Отмена</button>
+                <button id="confirmClearBtn" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: #EF4444; color: white; font-weight: 600; cursor: pointer;">Удалить</button>
+            </div>
+        </div>
+    </div>
     
     <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
     <script src="script.js?v=9"></script>
