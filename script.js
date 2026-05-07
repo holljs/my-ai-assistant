@@ -363,9 +363,17 @@ const btnCommunity = document.getElementById('btnCommunity');
 if (btnCommunity) {
     btnCommunity.addEventListener('click', (e) => {
         e.preventDefault();
-        vkBridge.send("VKWebAppShowCommunityMessages", { group_id: 191367447 })
+        const groupId = 191367447; 
+        
+        // Попытка 1: Мобильный виджет ВК
+        vkBridge.send("VKWebAppShowCommunityMessages", { group_id: groupId })
             .catch(() => {
-                vkBridge.send("VKWebAppOpenLink", { url: 'https://vk.com/im?sel=-191367447' });
+                // Попытка 2: Мобильная ссылка ВК
+                vkBridge.send("VKWebAppOpenLink", { url: `https://vk.com/im?sel=-${groupId}` })
+                    .catch(() => {
+                        // Попытка 3: Безотказный метод для КОМПЬЮТЕРА
+                        window.open(`https://vk.com/im?sel=-${groupId}`, '_blank');
+                    });
             });
     });
 }
@@ -375,7 +383,14 @@ const btnNatalia = document.getElementById('btnNatalia');
 if (btnNatalia) {
     btnNatalia.addEventListener('click', (e) => {
         e.preventDefault();
-        vkBridge.send("VKWebAppOpenLink", { url: 'https://vk.com/nataliselyahova' });
+        const url = "https://vk.com/nataliselyahova";
+        
+        // Попытка 1: Мобильная ссылка ВК
+        vkBridge.send("VKWebAppOpenLink", { url: url })
+            .catch(() => {
+                // Попытка 2: Безотказный метод для КОМПЬЮТЕРА
+                window.open(url, '_blank');
+            });
     });
 }
 
