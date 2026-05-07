@@ -147,28 +147,24 @@ tariffCards.forEach(card => {
 });
 
 // --- ОЧИСТКА ПАМЯТИ ---
-let clearConfirmTimeout;
-clearChatBtn.addEventListener('click', async () => {
+const confirmModal = document.getElementById('confirmModal');
+const cancelClearBtn = document.getElementById('cancelClearBtn');
+const confirmClearBtn = document.getElementById('confirmClearBtn');
+
+// 1. Показываем красивое окно при клике на корзину
+clearChatBtn.addEventListener('click', () => {
     if (!USER_ID) return;
-    
-    // Защита от случайного нажатия (работает везде, обходит блокировки iOS/Android)
-    if (!clearChatBtn.classList.contains('confirming')) {
-        clearChatBtn.classList.add('confirming');
-        clearChatBtn.innerHTML = '❓'; // Меняем иконку на вопрос
-        clearChatBtn.style.color = '#EF4444'; // Делаем красным
-        
-        clearConfirmTimeout = setTimeout(() => {
-            clearChatBtn.classList.remove('confirming');
-            clearChatBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
-            clearChatBtn.style.color = '';
-        }, 3000); // Через 3 секунды кнопка возвращается в норму
-        return; 
-    }
-    
-    // Если юзер нажал второй раз (подтвердил)
-    clearTimeout(clearConfirmTimeout);
-    clearChatBtn.classList.remove('confirming');
-    clearChatBtn.style.color = '';
+    confirmModal.style.display = 'flex'; 
+});
+
+// 2. Если нажали "Отмена" - прячем окно
+cancelClearBtn.addEventListener('click', () => {
+    confirmModal.style.display = 'none';
+});
+
+// 3. Если нажали "Удалить" - стираем память
+confirmClearBtn.addEventListener('click', async () => {
+    confirmModal.style.display = 'none'; // Сразу прячем окно
     
     chatBox.innerHTML = '<div class="message ai-message">Очищаю память... ⏳</div>';
     try {
@@ -179,10 +175,9 @@ clearChatBtn.addEventListener('click', async () => {
         });
         const result = await response.json();
         chatBox.innerHTML = `<div class="message ai-message">${result.response || 'Память очищена! 🧹'}</div>`;
-    } catch(e) { chatBox.innerHTML = '<div class="message ai-message">❌ Ошибка очистки</div>'; }
-    
-    // Возвращаем иконку корзины на место
-    clearChatBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+    } catch(e) { 
+        chatBox.innerHTML = '<div class="message ai-message">❌ Ошибка очистки</div>'; 
+    }
 });
 
 // --- ПРИКРЕПЛЕНИЕ ФОТО ---
