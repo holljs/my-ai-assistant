@@ -365,16 +365,18 @@ if (btnCommunity) {
         e.preventDefault();
         const groupId = 191367447; 
         
-        // Попытка 1: Мобильный виджет ВК
-        vkBridge.send("VKWebAppShowCommunityMessages", { group_id: groupId })
-            .catch(() => {
-                // Попытка 2: Мобильная ссылка ВК
-                vkBridge.send("VKWebAppOpenLink", { url: `https://vk.com/im?sel=-${groupId}` })
-                    .catch(() => {
-                        // Попытка 3: Безотказный метод для КОМПЬЮТЕРА
-                        window.open(`https://vk.com/im?sel=-${groupId}`, '_blank');
-                    });
-            });
+        // Проверяем, с телефона ли сидит юзер
+        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768) {
+            // Для мобилок - нативный виджет ВК
+            vkBridge.send("VKWebAppShowCommunityMessages", { group_id: groupId })
+                .catch(() => {
+                    // Если виджет заблокирован (например, нет прав), перенаправляем текущую страницу
+                    window.location.href = `https://vk.com/im?sel=-${groupId}`;
+                });
+        } else {
+            // Для ПК - безотказное открытие в новой вкладке
+            window.open(`https://vk.com/im?sel=-${groupId}`, '_blank');
+        }
     });
 }
 
@@ -385,12 +387,16 @@ if (btnNatalia) {
         e.preventDefault();
         const url = "https://vk.com/nataliselyahova";
         
-        // Попытка 1: Мобильная ссылка ВК
-        vkBridge.send("VKWebAppOpenLink", { url: url })
-            .catch(() => {
-                // Попытка 2: Безотказный метод для КОМПЬЮТЕРА
-                window.open(url, '_blank');
-            });
+        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768) {
+            // Для мобилок
+            vkBridge.send("VKWebAppOpenLink", { url: url })
+                .catch(() => {
+                    window.location.href = url;
+                });
+        } else {
+            // Для ПК
+            window.open(url, '_blank');
+        }
     });
 }
 
