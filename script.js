@@ -343,21 +343,6 @@ if (helpModelsBtn && helpModal) {
     window.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.style.display = 'none'; });
 }
 
-// --- ПЕРЕХВАТ ССЫЛОК И КНОПОК ВК (ИСПРАВЛЕНИЕ БАГОВ) ---
-
-// Перехват обычных ссылок в тексте (чтобы не было серого экрана)
-chatBox.addEventListener('click', (e) => {
-    let link = e.target.closest('a');
-    if (link && link.href) {
-        e.preventDefault();
-        if (link.href.includes('app54451681')) {
-            vkBridge.send("VKWebAppOpenApp", { app_id: 54451681 });
-        } else {
-            vkBridge.send("VKWebAppOpenLink", { url: link.href });
-        }
-    }
-});
-
 // Кнопка "Написать в сообщество"
 const btnCommunity = document.getElementById('btnCommunity');
 if (btnCommunity) {
