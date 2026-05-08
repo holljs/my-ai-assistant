@@ -343,48 +343,6 @@ if (helpModelsBtn && helpModal) {
     window.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.style.display = 'none'; });
 }
 
-// Кнопка "Написать в сообщество"
-const btnCommunity = document.getElementById('btnCommunity');
-if (btnCommunity) {
-    btnCommunity.addEventListener('click', (e) => {
-        e.preventDefault();
-        const groupId = 191367447; 
-        
-        // Проверяем, с телефона ли сидит юзер
-        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768) {
-            // Для мобилок - нативный виджет ВК
-            vkBridge.send("VKWebAppShowCommunityMessages", { group_id: groupId })
-                .catch(() => {
-                    // Если виджет заблокирован (например, нет прав), перенаправляем текущую страницу
-                    window.location.href = `https://vk.com/im?sel=-${groupId}`;
-                });
-        } else {
-            // Для ПК - безотказное открытие в новой вкладке
-            window.open(`https://vk.com/im?sel=-${groupId}`, '_blank');
-        }
-    });
-}
-
-// Кнопка "Написать Наталье"
-const btnNatalia = document.getElementById('btnNatalia');
-if (btnNatalia) {
-    btnNatalia.addEventListener('click', (e) => {
-        e.preventDefault();
-        const url = "https://vk.com/nataliselyahova";
-        
-        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768) {
-            // Для мобилок
-            vkBridge.send("VKWebAppOpenLink", { url: url })
-                .catch(() => {
-                    window.location.href = url;
-                });
-        } else {
-            // Для ПК
-            window.open(url, '_blank');
-        }
-    });
-}
-
 // --- СОХРАНЕНИЕ ВЫБОРА РЕЖИМА ---
 // Загружаем сохраненные настройки при входе
 if (localStorage.getItem('bro_model')) {
