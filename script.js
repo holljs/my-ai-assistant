@@ -368,8 +368,8 @@ if (bonusBtn) {
 
         try {
             // 1. Вызываем окно ВК "Разрешить сообщения"
-            // ВНИМАНИЕ: Замени 123456789 на реальный ID группы НейроБро (только цифры!)
-            await vkBridge.send("VKWebAppAllowMessagesFromGroup", { group_id: 123456789 });
+            // ВНИМАНИЕ: Замени 191367447 на реальный ID группы НейроБро (только цифры!)
+            await vkBridge.send("VKWebAppAllowMessagesFromGroup", { group_id: 191367447 });
 
             // Если юзер разрешил, код идет дальше. Меняем текст кнопки на загрузку.
             const originalText = bonusBtn.innerHTML;
