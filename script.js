@@ -97,6 +97,11 @@ async function fetchEnergy() {
         const result = await response.json();
         if (result.success && result.energy !== undefined) {
             energyCount.textContent = result.energy;
+            
+            // ЕСЛИ БОНУС УЖЕ ПОЛУЧЕН — ПРЯЧЕМ ПОДАРОК НАВСЕГДА
+            if (result.bonus_claimed && bonusBtn) {
+                bonusBtn.style.display = 'none';
+            }
         } else {
             energyCount.textContent = "0";
         }
