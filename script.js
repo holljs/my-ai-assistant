@@ -356,6 +356,52 @@ if (localStorage.getItem('bro_persona')) {
 modelSelector.addEventListener('change', (e) => localStorage.setItem('bro_model', e.target.value));
 personaSelector.addEventListener('change', (e) => localStorage.setItem('bro_persona', e.target.value));
 
+// --- БОНУС ЗА ПОДПИСКУ НА СООБЩЕНИЯ ---
+const bonusBtn = document.getElementById('bonusBtn');
+
+if (bonusBtn) {
+    bonusBtn.addEventListener('click', async () => {
+        if (!USER_ID) {
+            alert("Подождите, идет загрузка профиля...");
+            return;
+        }
+
+        try {
+            // 1. Вызываем окно ВК "Разрешить сообщения"
+            // ВНИМАНИЕ: Замени 123456789 на реальный ID группы НейроБро (только цифры!)
+            await vkBridge.send("VKWebAppAllowMessagesFromGroup", { group_id: 123456789 });
+
+            // Если юзер разрешил, код идет дальше. Меняем текст кнопки на загрузку.
+            const originalText = bonusBtn.innerHTML;
+            bonusBtn.innerHTML = '⏳ Начисляем...';
+            bonusBtn.disabled = true;
+
+            // 2. Стучимся на наш сервер за бонусом
+            const response = await fetch(`${BASE_URL}/bonus`, {
+                method: 'POST',
+                headers: jsonHeadersWithSign, // Берем уже готовые заголовки с подписью
+                body: JSON.stringify({ user_id: USER_ID }) 
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                alert("Ура! Бонус 15 ⚡ начислен. Загляни в сообщения группы — Бро уже написал тебе!");
+                bonusBtn.style.display = 'none'; // Прячем кнопку навсегда
+                fetchEnergy(); // Сразу обновляем цифру баланса на экране
+            } else {
+                alert("Упс: " + (result.detail || "Что-то пошло не так"));
+                bonusBtn.innerHTML = originalText;
+                bonusBtn.disabled = false;
+            }
+
+        } catch (error) {
+            // Пользователь нажал "Отмена" или закрыл окно
+            console.log("Пользователь отказался от рассылки:", error);
+        }
+    });
+}
+
 // --- ЗАПУСК ---
 async function initApp() {
     try {
