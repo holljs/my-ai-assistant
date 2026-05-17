@@ -407,12 +407,36 @@ if (bonusBtn) {
     });
 }
 
+// --- КОПИРОВАНИЕ ID ---
+const copyIdBtn = document.getElementById('copyIdBtn');
+if (copyIdBtn) {
+    copyIdBtn.addEventListener('click', () => {
+        if (!USER_ID) return;
+        navigator.clipboard.writeText(USER_ID).then(() => {
+            const originalText = copyIdBtn.innerHTML;
+            copyIdBtn.innerHTML = '✅ Скопировано!';
+            copyIdBtn.style.background = '#dcfce7';
+            copyIdBtn.style.color = '#166534';
+            setTimeout(() => {
+                copyIdBtn.innerHTML = originalText;
+                copyIdBtn.style.background = '#e2e8f0';
+                copyIdBtn.style.color = '#334155';
+            }, 2000);
+        }).catch(() => { alert("Ваш ID: " + USER_ID); });
+    });
+}
+
 // --- ЗАПУСК ---
 async function initApp() {
     try {
         const data = await vkBridge.send('VKWebAppGetUserInfo');
         if (data && data.id) {
             USER_ID = data.id;
+            
+            // Вставляем ID в нашу новую плашку
+            const displayIdEl = document.getElementById('displayUserId');
+            if (displayIdEl) displayIdEl.textContent = USER_ID;
+
             loadHistory();
             fetchEnergy();
         }
